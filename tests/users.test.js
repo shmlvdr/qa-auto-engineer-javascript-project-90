@@ -213,7 +213,7 @@ test.describe('Пользователи (Users)', () => {
 
     const rows = usersPage.rows();
     const rowsCount = await rows.count();
-    for (let i = 0; i < rowsCount; i++) {
+    for (let i = 0; i < rowsCount; i += 1) {
       const checkbox = rows.nth(i).getByTestId('user-select');
       await expect(checkbox).toBeChecked();
     }

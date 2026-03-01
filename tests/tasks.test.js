@@ -50,7 +50,9 @@ test.describe('Канбан-доска (Tasks)', () => {
       const col = tasksPage.columnById(colId);
       try {
         await expect(col).toBeVisible({ timeout: 500 });
-      } catch {}
+      } catch {
+        // колонка может быть не реализована
+      }
     }
 
     const anyTasksCount = await tasksPage.taskCards().count();
@@ -176,7 +178,9 @@ test.describe('Канбан-доска (Tasks)', () => {
       );
       await tasksPage.applyAssigneeFilter('user-2');
       await tasksPage.expectTaskInColumn(tasks[1], 'in-progress');
-    } catch {}
+    } catch {
+      // фильтр по исполнителю может быть не реализован
+    }
   });
 
   test('Перемещение задачи между колонками (DnD / смена статуса)', async () => {

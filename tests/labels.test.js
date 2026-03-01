@@ -171,7 +171,7 @@ test.describe('Метки (Labels)', () => {
 
     const rows = labelsPage.rows();
     const rowsCount = await rows.count();
-    for (let i = 0; i < rowsCount; i++) {
+    for (let i = 0; i < rowsCount; i += 1) {
       const checkbox = rows.nth(i).getByTestId('label-select');
       await expect(checkbox).toBeChecked();
     }

@@ -62,7 +62,9 @@ export default class LoginPage {
   async isLoggedOut() {
     try {
       await expect(this.protectedContent()).toBeHidden({ timeout: 2000 });
-    } catch {}
+    } catch {
+      // игнорируем отсутствие protected-блока
+    }
 
     try {
       await expect(this.loginInput()).toBeVisible({ timeout: 1000 });

@@ -167,7 +167,7 @@ test.describe('Статусы (Statuses)', () => {
 
     const rows = statusesPage.rows();
     const rowsCount = await rows.count();
-    for (let i = 0; i < rowsCount; i++) {
+    for (let i = 0; i < rowsCount; i += 1) {
       const checkbox = rows.nth(i).getByTestId('status-select');
       await expect(checkbox).toBeChecked();
     }
