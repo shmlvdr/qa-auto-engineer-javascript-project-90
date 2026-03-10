@@ -1,7 +1,7 @@
 ### Hexlet tests and linter status:
 
 [![Actions Status](https://github.com/shmlvdr/qa-auto-engineer-javascript-project-90/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/shmlvdr/qa-auto-engineer-javascript-project-90/actions)
-![CI](https://github.com/shmlvdr/qa-auto-engineer-javascript-project-90/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/shmlvdr/qa-auto-engineer-javascript-project-90/actions/workflows/ci.yml/badge.svg)](https://github.com/shmlvdr/qa-auto-engineer-javascript-project-90/actions)
 
 # Testing a Kanban Board (JS) (QA Auto Engineer JavaScript Project 90)
 
