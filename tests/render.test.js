@@ -9,7 +9,7 @@ test('application loads and displays key elements', async ({ page }) => {
   // 1. Контейнер приложения существует и виден
   await expect(page.locator('#root')).toBeVisible();
 
-  // 2. Основной заголовок приложения (заменишь на свой, когда допишешь Канбан)
+  // 2. Основной заголовок приложения
   // Сейчас он "Vite + React", но как только переименуешь — обнови это ожидание.
   await expect(
     page.getByRole('heading', { name: /vite \+ react/i })
