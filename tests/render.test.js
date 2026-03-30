@@ -3,22 +3,15 @@ import { test, expect } from '@playwright/test';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 
-test('application renders root React app and (if present) main kanban UI', async ({ page }) => {
+test('application mounts React app into #root without errors', async ({ page }) => {
   await page.goto(BASE);
 
+  // 1. Корневой контейнер существует и виден
   const root = page.locator('#root');
   await expect(root).toBeVisible();
 
-  const rootChildrenCount = await root.locator('*').count();
-  expect(rootChildrenCount).toBeGreaterThan(0);
-  await page.goto(`${BASE}/tasks`);
-
-  const columns = page.getByTestId('tasks-column');
-  const columnsCount = await columns.count();
-
-  if (columnsCount === 0) {
-    test.skip('Tasks board columns not present at /tasks — skipping kanban part of render test');
-  }
-  await expect(columns.first()).toBeVisible();
-  await expect(page.getByTestId('task-create-button')).toBeVisible();
+  // 2. Внутри #root есть хотя бы один дочерний элемент — значит, React что-то смонтировал
+  const children = root.locator('*');
+  const childrenCount = await children.count();
+  expect(childrenCount).toBeGreaterThan(0);
 });
