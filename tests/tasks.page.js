@@ -1,9 +1,14 @@
+// tests/tasks.page.js
 import { expect } from '@playwright/test';
+import BaseListPage from './pages/baseList.page.js';
 
-export default class TasksPage {
+export default class TasksPage extends BaseListPage {
   constructor(page, baseUrl = 'http://localhost:5173') {
-    this.page = page;
-    this.baseUrl = baseUrl.replace(/\/$/, '');
+    super(page, baseUrl, {
+      listTestId: 'tasks-board-placeholder',
+      rowTestId: 'tasks-row-placeholder',
+      createButtonTestId: 'tasks-create-placeholder',
+    });
 
     this.columns = () => this.page.getByTestId('tasks-column');
     this.columnById = (columnId) =>
@@ -30,7 +35,8 @@ export default class TasksPage {
   }
 
   async goto(path = '/tasks') {
-    await this.page.goto(this.baseUrl + path);
+    // используем реализацию goto из BaseListPage
+    await super.goto(path);
   }
 
   async isBoardPresent() {

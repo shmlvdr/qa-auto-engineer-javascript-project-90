@@ -4,6 +4,18 @@ import { ensureLocatorVisibleOrSkip } from './utils/crudHelpers.js';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 
+const STATUS = {
+  TODO: 'to-do',
+  IN_PROGRESS: 'in-progress',
+  DONE: 'done',
+};
+
+const ASSIGNEE = {
+  USER_1: 'user-1',
+  USER_2: 'user-2',
+  USER_3: 'user-3',
+};
+
 test.describe('Канбан-доска (Tasks)', () => {
   let tasksPage;
 
@@ -29,13 +41,13 @@ test.describe('Канбан-доска (Tasks)', () => {
     const newTask = {
       name: 'Implement Kanban board',
       description: 'Create basic Kanban board with columns',
-      status: 'to-do',
-      assignee: 'user-1',
+      status: STATUS.TODO,
+      assignee: ASSIGNEE.USER_1,
     };
 
     await tasksPage.fillTaskForm(newTask);
     await tasksPage.submitTaskForm();
-    await tasksPage.expectTaskInColumn(newTask, 'to-do');
+    await tasksPage.expectTaskInColumn(newTask, STATUS.TODO);
   });
 
   test('Список задач и колонки отображаются корректно', async () => {
@@ -45,7 +57,7 @@ test.describe('Канбан-доска (Tasks)', () => {
       'Tasks board not present at /tasks — skipping',
     );
 
-    const expectedColumns = ['to-do', 'in-progress', 'done'];
+    const expectedColumns = [STATUS.TODO, STATUS.IN_PROGRESS, STATUS.DONE];
     for (const colId of expectedColumns) {
       const col = tasksPage.columnById(colId);
       try {
@@ -79,13 +91,13 @@ test.describe('Канбан-доска (Tasks)', () => {
     const originalTask = {
       name: 'Refactor login feature',
       description: 'Clean up login logic',
-      status: 'to-do',
-      assignee: 'user-2',
+      status: STATUS.TODO,
+      assignee: ASSIGNEE.USER_2,
     };
 
     await tasksPage.fillTaskForm(originalTask);
     await tasksPage.submitTaskForm();
-    await tasksPage.expectTaskInColumn(originalTask, 'to-do');
+    await tasksPage.expectTaskInColumn(originalTask, STATUS.TODO);
 
     await tasksPage.openEditFormForTask(originalTask.name);
     formPresent = await tasksPage.isTaskFormPresent();
@@ -97,14 +109,14 @@ test.describe('Канбан-доска (Tasks)', () => {
     const updatedTask = {
       name: 'Refactor login & auth feature',
       description: 'Clean up login and auth logic',
-      status: 'in-progress',
-      assignee: 'user-3',
+      status: STATUS.IN_PROGRESS,
+      assignee: ASSIGNEE.USER_3,
     };
 
     await tasksPage.fillTaskForm(updatedTask);
     await tasksPage.submitTaskForm();
 
-    await tasksPage.expectTaskInColumn(updatedTask, 'in-progress');
+    await tasksPage.expectTaskInColumn(updatedTask, STATUS.IN_PROGRESS);
     await tasksPage.expectTaskNotPresent(originalTask.name);
   });
 
@@ -125,12 +137,12 @@ test.describe('Канбан-доска (Tasks)', () => {
     const taskToDelete = {
       name: 'Temporary task',
       description: 'Should be deleted',
-      status: 'to-do',
+      status: STATUS.TODO,
     };
 
     await tasksPage.fillTaskForm(taskToDelete);
     await tasksPage.submitTaskForm();
-    await tasksPage.expectTaskInColumn(taskToDelete, 'to-do');
+    await tasksPage.expectTaskInColumn(taskToDelete, STATUS.TODO);
 
     await tasksPage.deleteTask(taskToDelete.name);
     await tasksPage.expectTaskNotPresent(taskToDelete.name);
@@ -149,8 +161,8 @@ test.describe('Канбан-доска (Tasks)', () => {
     );
 
     const tasks = [
-      { name: 'Filter task 1', status: 'to-do', assignee: 'user-1' },
-      { name: 'Filter task 2', status: 'in-progress', assignee: 'user-2' },
+      { name: 'Filter task 1', status: STATUS.TODO,        assignee: ASSIGNEE.USER_1 },
+      { name: 'Filter task 2', status: STATUS.IN_PROGRESS, assignee: ASSIGNEE.USER_2 },
     ];
 
     for (const t of tasks) {
@@ -166,9 +178,9 @@ test.describe('Канбан-доска (Tasks)', () => {
       await tasksPage.expectTaskInColumn(t, t.status);
     }
 
-    await tasksPage.applyStatusFilter('to-do');
-    await tasksPage.expectTaskInColumn(tasks[0], 'to-do');
-    await tasksPage.expectTaskNotInColumn(tasks[1], 'in-progress');
+    await tasksPage.applyStatusFilter(STATUS.TODO);
+    await tasksPage.expectTaskInColumn(tasks[0], STATUS.TODO);
+    await tasksPage.expectTaskNotInColumn(tasks[1], STATUS.IN_PROGRESS);
 
     try {
       await ensureLocatorVisibleOrSkip(
@@ -176,8 +188,8 @@ test.describe('Канбан-доска (Tasks)', () => {
         'Assignee filter not implemented — skipping assignee part',
         500,
       );
-      await tasksPage.applyAssigneeFilter('user-2');
-      await tasksPage.expectTaskInColumn(tasks[1], 'in-progress');
+      await tasksPage.applyAssigneeFilter(ASSIGNEE.USER_2);
+      await tasksPage.expectTaskInColumn(tasks[1], STATUS.IN_PROGRESS);
     } catch {
       // фильтр по исполнителю может быть не реализован
     }
@@ -200,21 +212,21 @@ test.describe('Канбан-доска (Tasks)', () => {
     const movableTask = {
       name: 'Task to move',
       description: 'Should be moved between columns',
-      status: 'to-do',
+      status: STATUS.TODO,
     };
 
     await tasksPage.fillTaskForm(movableTask);
     await tasksPage.submitTaskForm();
-    await tasksPage.expectTaskInColumn(movableTask, 'to-do');
+    await tasksPage.expectTaskInColumn(movableTask, STATUS.TODO);
 
     try {
       await tasksPage.moveTaskBetweenColumns(
         movableTask.name,
-        'to-do',
-        'in-progress',
+        STATUS.TODO,
+        STATUS.IN_PROGRESS,
       );
-      await tasksPage.expectTaskInColumn(movableTask, 'in-progress');
-      await tasksPage.expectTaskNotInColumn(movableTask, 'to-do');
+      await tasksPage.expectTaskInColumn(movableTask, STATUS.IN_PROGRESS);
+      await tasksPage.expectTaskNotInColumn(movableTask, STATUS.TODO);
     } catch {
       test.skip(true, 'Drag&drop / move not implemented — skipping');
     }

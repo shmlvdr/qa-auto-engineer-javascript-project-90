@@ -4,9 +4,8 @@ export default class LoginPage {
   constructor(page, baseUrl = 'http://localhost:5173') {
     this.page = page;
     this.baseUrl = baseUrl.replace(/\/$/, '');
-
-    this.loginInput = () => this.page.getByLabel('login-input');
-    this.passwordInput = () => this.page.getByLabel('password-input');
+    this.loginInput = () => this.page.getByTestId('login-input');
+    this.passwordInput = () => this.page.getByTestId('password-input');
     this.signInButton = () =>
       this.page.getByRole('button', { name: /sign in/i });
     this.protectedContent = () => this.page.getByTestId('protected');
