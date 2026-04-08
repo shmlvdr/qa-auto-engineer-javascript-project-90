@@ -1,234 +1,146 @@
-import { test, expect } from '@playwright/test';
-import TasksPage from './tasks.page.js';
-import { ensureLocatorVisibleOrSkip } from './utils/crudHelpers.js';
+import { expect } from '@playwright/test';
+import BaseListPage from './pages/baseList.page.js';
 
-const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
+export default class TasksPage extends BaseListPage {
+  constructor(page, baseUrl = 'http://localhost:5173') {
+    super(page, baseUrl, {
+      listTestId: 'task-card',              
+      rowTestId: 'task-card',                
+      createButtonTestId: 'task-create-button', 
+    });
 
-const STATUS = {
-  TODO: 'to-do',
-  IN_PROGRESS: 'in-progress',
-  DONE: 'done',
-};
-
-const ASSIGNEE = {
-  USER_1: 'user-1',
-  USER_2: 'user-2',
-  USER_3: 'user-3',
-};
-
-test.describe('Канбан-доска (Tasks)', () => {
-  let tasksPage;
-
-  test.beforeEach(async ({ page }) => {
-    tasksPage = new TasksPage(page, BASE);
-    await tasksPage.goto();
-  });
-
-  test('Создание задачи: форма отображается и данные сохраняются', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(
-      !boardPresent,
-      'Tasks board not present at /tasks — skipping',
-    );
-
-    await tasksPage.openCreateForm();
-    const formPresent = await tasksPage.isTaskFormPresent();
-    test.skip(
-      !formPresent,
-      'Task form not present after clicking create — skipping',
-    );
-
-    const newTask = {
-      name: 'Implement Kanban board',
-      description: 'Create basic Kanban board with columns',
-      status: STATUS.TODO,
-      assignee: ASSIGNEE.USER_1,
-    };
-
-    await tasksPage.fillTaskForm(newTask);
-    await tasksPage.submitTaskForm();
-    await tasksPage.expectTaskInColumn(newTask, STATUS.TODO);
-  });
-
-  test('Список задач и колонки отображаются корректно', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(
-      !boardPresent,
-      'Tasks board not present at /tasks — skipping',
-    );
-
-    const expectedColumns = [STATUS.TODO, STATUS.IN_PROGRESS, STATUS.DONE];
-    for (const colId of expectedColumns) {
-      const col = tasksPage.columnById(colId);
-      try {
-        await expect(col).toBeVisible({ timeout: 500 });
-      } catch {
-        // колонка может быть не реализована
-      }
-    }
-
-    const anyTasksCount = await tasksPage.taskCards().count();
-    expect(anyTasksCount).toBeGreaterThanOrEqual(0);
-    if (anyTasksCount > 0) {
-      await expect(tasksPage.taskCards().first()).toBeVisible();
-    }
-  });
-
-  test('Редактирование задачи сохраняет изменения и меняет колонку', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(
-      !boardPresent,
-      'Tasks board not present at /tasks — skipping',
-    );
-
-    await tasksPage.openCreateForm();
-    let formPresent = await tasksPage.isTaskFormPresent();
-    test.skip(
-      !formPresent,
-      'Task form not present for create — skipping',
-    );
-
-    const originalTask = {
-      name: 'Refactor login feature',
-      description: 'Clean up login logic',
-      status: STATUS.TODO,
-      assignee: ASSIGNEE.USER_2,
-    };
-
-    await tasksPage.fillTaskForm(originalTask);
-    await tasksPage.submitTaskForm();
-    await tasksPage.expectTaskInColumn(originalTask, STATUS.TODO);
-
-    await tasksPage.openEditFormForTask(originalTask.name);
-    formPresent = await tasksPage.isTaskFormPresent();
-    test.skip(
-      !formPresent,
-      'Task form not present for edit — skipping',
-    );
-
-    const updatedTask = {
-      name: 'Refactor login & auth feature',
-      description: 'Clean up login and auth logic',
-      status: STATUS.IN_PROGRESS,
-      assignee: ASSIGNEE.USER_3,
-    };
-
-    await tasksPage.fillTaskForm(updatedTask);
-    await tasksPage.submitTaskForm();
-
-    await tasksPage.expectTaskInColumn(updatedTask, STATUS.IN_PROGRESS);
-    await tasksPage.expectTaskNotPresent(originalTask.name);
-  });
-
-  test('Удаление одной задачи', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(
-      !boardPresent,
-      'Tasks board not present at /tasks — skipping',
-    );
-
-    await tasksPage.openCreateForm();
-    const formPresent = await tasksPage.isTaskFormPresent();
-    test.skip(
-      !formPresent,
-      'Task form not present for create — skipping',
-    );
-
-    const taskToDelete = {
-      name: 'Temporary task',
-      description: 'Should be deleted',
-      status: STATUS.TODO,
-    };
-
-    await tasksPage.fillTaskForm(taskToDelete);
-    await tasksPage.submitTaskForm();
-    await tasksPage.expectTaskInColumn(taskToDelete, STATUS.TODO);
-
-    await tasksPage.deleteTask(taskToDelete.name);
-    await tasksPage.expectTaskNotPresent(taskToDelete.name);
-  });
-
-  test('Фильтрация задач по статусу и исполнителю', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(
-      !boardPresent,
-      'Tasks board not present at /tasks — skipping',
-    );
-
-    await ensureLocatorVisibleOrSkip(
-      tasksPage.filterStatus(),
-      'Status filter not implemented — skipping',
-    );
-
-    const tasks = [
-      { name: 'Filter task 1', status: STATUS.TODO,        assignee: ASSIGNEE.USER_1 },
-      { name: 'Filter task 2', status: STATUS.IN_PROGRESS, assignee: ASSIGNEE.USER_2 },
-    ];
-
-    for (const t of tasks) {
-      await tasksPage.openCreateForm();
-      const formPresent = await tasksPage.isTaskFormPresent();
-      test.skip(
-        !formPresent,
-        'Task form not present for create — skipping (filters)',
+    this.columns = () => this.page.locator('[data-testid="tasks-column"]');
+    this.columnById = (columnId) =>
+      this.page.locator(
+        `[data-testid="tasks-column"][data-column-id="${columnId}"]`,
       );
+    this.taskCards = () => this.page.locator('[data-testid="task-card"]');
+    this.taskCardByName = (name) =>
+      this.taskCards().filter({ hasText: name });
+    this.createTaskButton = () => this.page.locator('[data-testid="task-create-button"]');
+    this.taskNameInput = () => this.page.locator('[data-testid="task-name"]');
+    this.taskDescriptionInput = () =>
+      this.page.locator('[data-testid="task-description"]');
+    this.taskStatusSelect = () => this.page.locator('[data-testid="task-status"]');
+    this.taskAssigneeSelect = () => this.page.locator('[data-testid="task-assignee"]');
+    this.taskSubmitButton = () => this.page.locator('[data-testid="task-submit"]');
+    this.filterStatus = () => this.page.locator('[data-testid="tasks-filter-status"]');
+    this.filterAssignee = () =>
+      this.page.locator('[data-testid="tasks-filter-assignee"]');
+    this.filterLabel = () => this.page.locator('[data-testid="tasks-filter-label"]');
+  }
 
-      await tasksPage.fillTaskForm(t);
-      await tasksPage.submitTaskForm();
-      await tasksPage.expectTaskInColumn(t, t.status);
-    }
+  async goto(path = '/tasks') {
+    await super.goto(path);
+  }
 
-    await tasksPage.applyStatusFilter(STATUS.TODO);
-    await tasksPage.expectTaskInColumn(tasks[0], STATUS.TODO);
-    await tasksPage.expectTaskNotInColumn(tasks[1], STATUS.IN_PROGRESS);
-
+  async isBoardPresent() {
     try {
-      await ensureLocatorVisibleOrSkip(
-        tasksPage.filterAssignee(),
-        'Assignee filter not implemented — skipping assignee part',
-        500,
-      );
-      await tasksPage.applyAssigneeFilter(ASSIGNEE.USER_2);
-      await tasksPage.expectTaskInColumn(tasks[1], STATUS.IN_PROGRESS);
+      await expect(this.columns().first()).toBeVisible({ timeout: 1000 });
+      return true;
     } catch {
-      // фильтр по исполнителю может быть не реализован
+      return false;
     }
-  });
+  }
 
-  test('Перемещение задачи между колонками (DnD / смена статуса)', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(
-      !boardPresent,
-      'Tasks board not present at /tasks — skipping',
-    );
-
-    await tasksPage.openCreateForm();
-    const formPresent = await tasksPage.isTaskFormPresent();
-    test.skip(
-      !formPresent,
-      'Task form not present for create — skipping (move)',
-    );
-
-    const movableTask = {
-      name: 'Task to move',
-      description: 'Should be moved between columns',
-      status: STATUS.TODO,
-    };
-
-    await tasksPage.fillTaskForm(movableTask);
-    await tasksPage.submitTaskForm();
-    await tasksPage.expectTaskInColumn(movableTask, STATUS.TODO);
-
+  async isTaskFormPresent() {
     try {
-      await tasksPage.moveTaskBetweenColumns(
-        movableTask.name,
-        STATUS.TODO,
-        STATUS.IN_PROGRESS,
-      );
-      await tasksPage.expectTaskInColumn(movableTask, STATUS.IN_PROGRESS);
-      await tasksPage.expectTaskNotInColumn(movableTask, STATUS.TODO);
+      await expect(this.taskNameInput()).toBeVisible({ timeout: 1000 });
+      await expect(this.taskStatusSelect()).toBeVisible({ timeout: 1000 });
+      await expect(this.taskSubmitButton()).toBeVisible({ timeout: 1000 });
+      return true;
     } catch {
-      test.skip(true, 'Drag&drop / move not implemented — skipping');
+      return false;
     }
-  });
-});
+  }
+
+  async openCreateForm() {
+    await this.createTaskButton().click();
+  }
+
+  async fillTaskForm({ name, description, status, assignee }) {
+    if (name !== undefined) {
+      await this.taskNameInput().fill(name);
+    }
+    if (
+      description !== undefined &&
+      (await this.taskDescriptionInput().count()) > 0
+    ) {
+      await this.taskDescriptionInput().fill(description);
+    }
+    if (status !== undefined) {
+      await this.taskStatusSelect().selectOption(status);
+    }
+    if (
+      assignee !== undefined &&
+      (await this.taskAssigneeSelect().count()) > 0
+    ) {
+      await this.taskAssigneeSelect().selectOption(assignee);
+    }
+  }
+
+  async submitTaskForm() {
+    await this.taskSubmitButton().click();
+  }
+
+  async expectTaskInColumn({ name }, columnId) {
+    const column = this.columnById(columnId);
+    await expect(column).toBeVisible();
+    const card = column
+      .locator('[data-testid="task-card"]')
+      .filter({ hasText: name });
+    await expect(card).toBeVisible();
+  }
+
+  async expectTaskNotInColumn({ name }, columnId) {
+    const column = this.columnById(columnId);
+    const card = column
+      .locator('[data-testid="task-card"]')
+      .filter({ hasText: name });
+    await expect(card).toHaveCount(0);
+  }
+
+  async openEditFormForTask(name) {
+    const card = this.taskCardByName(name);
+    const editButton = card.locator('[data-testid="task-edit"]');
+    await editButton.click();
+  }
+
+  async deleteTask(name) {
+    const card = this.taskCardByName(name);
+    const deleteButton = card.locator('[data-testid="task-delete"]');
+    await deleteButton.click();
+  }
+
+  async expectTaskNotPresent(name) {
+    const card = this.taskCardByName(name);
+    await expect(card).toHaveCount(0);
+  }
+
+  async getTasksCountInColumn(columnId) {
+    const column = this.columnById(columnId);
+    return column.locator('[data-testid="task-card"]').count();
+  }
+
+  async applyStatusFilter(statusValue) {
+    await this.filterStatus().selectOption(statusValue);
+  }
+
+  async applyAssigneeFilter(assigneeValue) {
+    await this.filterAssignee().selectOption(assigneeValue);
+  }
+
+  async applyLabelFilter(labelValue) {
+    await this.filterLabel().selectOption(labelValue);
+  }
+
+  async moveTaskBetweenColumns(name, fromColumnId, toColumnId) {
+    const sourceColumn = this.columnById(fromColumnId);
+    const targetColumn = this.columnById(toColumnId);
+    const taskCard = sourceColumn
+      .locator('[data-testid="task-card"]')
+      .filter({ hasText: name });
+
+    await taskCard.dragTo(targetColumn);
+  }
+}

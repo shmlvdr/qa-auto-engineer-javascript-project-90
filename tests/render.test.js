@@ -3,15 +3,15 @@ import { test, expect } from '@playwright/test';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 
-test('application renders kanban board with at least one column', async ({ page }) => {
+test('приложение Task Manager рендерит доску задач', async ({ page }) => {
+  await page.goto(BASE);
+  const root = page.locator('#root');
+  await expect(root).toBeVisible();
+  const rootChildrenCount = await root.locator('*').count();
+  expect(rootChildrenCount).toBeGreaterThan(0);
+  await page.getByLabel(/username/i).fill('username');
+  await page.getByLabel(/password/i).fill('password');
+  await page.getByRole('button', { name: /sign in/i }).click();
   await page.goto(`${BASE}/tasks`);
-
-  const columns = page.getByTestId('tasks-column');
-  const count = await columns.count();
-
-  test.skip(
-    count === 0,
-    'No tasks-column found at /tasks — skipping render test on non-kanban implementation',
-  );
-  await expect(columns.first()).toBeVisible();
+  await expect(page.getByText('Tasks')).toBeVisible();
 });
