@@ -5,9 +5,9 @@ import BaseListPage from './pages/baseList.page.js';
 export default class TasksPage extends BaseListPage {
   constructor(page, baseUrl = 'http://localhost:5173') {
     super(page, baseUrl, {
-      listTestId: 'tasks-board-placeholder',
-      rowTestId: 'tasks-row-placeholder',
-      createButtonTestId: 'tasks-create-placeholder',
+      listTestId: 'tasks-board',
+      rowTestId: 'task-card', 
+      createButtonTestId: 'task-create-button'
     });
 
     this.columns = () => this.page.getByTestId('tasks-column');
@@ -15,11 +15,9 @@ export default class TasksPage extends BaseListPage {
       this.page.locator(
         `[data-testid="tasks-column"][data-column-id="${columnId}"]`,
       );
-
     this.taskCards = () => this.page.getByTestId('task-card');
     this.taskCardByName = (name) =>
       this.page.getByTestId('task-card').filter({ hasText: name });
-
     this.createTaskButton = () => this.page.getByTestId('task-create-button');
     this.taskNameInput = () => this.page.getByTestId('task-name');
     this.taskDescriptionInput = () =>
@@ -27,7 +25,6 @@ export default class TasksPage extends BaseListPage {
     this.taskStatusSelect = () => this.page.getByTestId('task-status');
     this.taskAssigneeSelect = () => this.page.getByTestId('task-assignee');
     this.taskSubmitButton = () => this.page.getByTestId('task-submit');
-
     this.filterStatus = () => this.page.getByTestId('tasks-filter-status');
     this.filterAssignee = () =>
       this.page.getByTestId('tasks-filter-assignee');
@@ -35,13 +32,12 @@ export default class TasksPage extends BaseListPage {
   }
 
   async goto(path = '/tasks') {
-    // используем реализацию goto из BaseListPage
     await super.goto(path);
   }
 
   async isBoardPresent() {
     try {
-      await expect(this.columns()).toBeVisible({ timeout: 1000 });
+      await expect(this.columns().first()).toBeVisible({ timeout: 1000 });
       return true;
     } catch {
       return false;
@@ -62,7 +58,6 @@ export default class TasksPage extends BaseListPage {
   async openCreateForm() {
     await this.createTaskButton().click();
   }
-
   async fillTaskForm({ name, description, status, assignee }) {
     if (name !== undefined) {
       await this.taskNameInput().fill(name);
@@ -120,7 +115,7 @@ export default class TasksPage extends BaseListPage {
 
   async getTasksCountInColumn(columnId) {
     const column = this.columnById(columnId);
-    return await column.getByTestId('task-card').count();
+    return column.getByTestId('task-card').count();
   }
 
   async applyStatusFilter(statusValue) {
