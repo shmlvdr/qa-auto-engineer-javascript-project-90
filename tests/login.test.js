@@ -13,12 +13,13 @@ test.describe('Авторизация и выход (UI)', () => {
   test('Успешный вход (символический)', async () => {
     await loginPage.navigate();
 
-    const formPresentBefore = await loginPage.isLoginFormPresent();
-    expect(formPresentBefore).toBeTruthy();
+    // До логина: форма видна, профиля нет
+    expect(await loginPage.isLoginFormPresent()).toBeTruthy();
     expect(await loginPage.isLoggedIn()).toBeFalsy();
 
     await loginPage.login('username', 'password');
 
+    // После логина: форма скрыта, профиль виден
     expect(await loginPage.isLoginFormPresent()).toBeFalsy();
     expect(await loginPage.isLoggedIn()).toBeTruthy();
   });
@@ -26,16 +27,19 @@ test.describe('Авторизация и выход (UI)', () => {
   test('Выход из системы (символический)', async () => {
     await loginPage.navigate();
 
-    const formPresent = await loginPage.isLoginFormPresent();
-    expect(formPresent).toBeTruthy();
+    // Начальное состояние
+    expect(await loginPage.isLoginFormPresent()).toBeTruthy();
     expect(await loginPage.isLoggedIn()).toBeFalsy();
 
     await loginPage.login('username', 'password');
+
+    // После логина
     expect(await loginPage.isLoginFormPresent()).toBeFalsy();
     expect(await loginPage.isLoggedIn()).toBeTruthy();
 
     await loginPage.logout();
 
+    // После выхода: профиля нет, форма снова есть
     expect(await loginPage.isLoggedIn()).toBeFalsy();
     expect(await loginPage.isLoggedOut()).toBeTruthy();
   });
