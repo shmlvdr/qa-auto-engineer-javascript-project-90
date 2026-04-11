@@ -1,4 +1,3 @@
-// tests/labels.page.js
 import { expect } from '@playwright/test';
 import BaseListPage from './pages/baseList.page.js';
 
@@ -60,6 +59,7 @@ export default class LabelsPage extends BaseListPage {
   async expectLabelInList({ name }) {
     const row = await this.getLabelRowByName(name);
     await expect(row).toHaveCount(1);
+    await expect(row.locator('.column-name')).toContainText(name);
   }
 
   async expectLabelNotInList(name) {

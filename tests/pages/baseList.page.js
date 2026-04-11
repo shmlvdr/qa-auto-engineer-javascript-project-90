@@ -11,10 +11,6 @@ export default class BaseListPage {
     await this.page.goto(this.baseUrl + path);
   }
 
-  // Дочерние классы должны реализовать:
-  // listRoot()  — корневой контейнер списка/доски
-  // items()     — коллекция элементов (строки/карточки)
-
   createButton() {
     return this.page.getByRole('link', { name: /create/i });
   }
@@ -26,9 +22,15 @@ export default class BaseListPage {
   async isListPresent() {
     try {
       await expect(this.listRoot()).toBeVisible({ timeout: 1000 });
+      await expect(this.items().first()).toBeVisible({ timeout: 2000 });
       return true;
     } catch {
-      return false;
+      try {
+        await expect(this.listRoot()).toBeVisible({ timeout: 1000 });
+        return true;
+      } catch {
+        return false;
+      }
     }
   }
 

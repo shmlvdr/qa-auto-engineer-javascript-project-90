@@ -46,7 +46,9 @@ test.describe('Пользователи (Users)', () => {
     if (count > 0) {
       const firstRow = usersPage.items().first();
       await expect(firstRow).toBeVisible();
-      await expect(firstRow).toContainText('@');
+      await expect(firstRow.locator('.column-email')).toContainText('@');
+      await expect(firstRow.locator('.column-firstName')).toContainText(/./);
+      await expect(firstRow.locator('.column-lastName')).toContainText(/./);
     }
   });
 
@@ -126,8 +128,13 @@ test.describe('Пользователи (Users)', () => {
     await usersPage.submitForm();
     await usersPage.expectUserInList(userToDelete);
 
+    const beforeCount = await usersPage.getUsersCount();
+
     await usersPage.deleteUser(userToDelete.email);
     await usersPage.expectUserNotInList(userToDelete.email);
+
+    const afterCount = await usersPage.getUsersCount();
+    expect(afterCount).toBeLessThan(beforeCount);
   });
 
   test('Массовое удаление пользователей (выделить всех -> удалить выбранных)', async () => {

@@ -13,12 +13,13 @@ test.describe('Авторизация и выход (UI)', () => {
   test('Успешный вход (символический)', async () => {
     await loginPage.navigate();
 
-    const formPresent = await loginPage.isLoginFormPresent();
-    expect(formPresent).toBeTruthy();
+    const formPresentBefore = await loginPage.isLoginFormPresent();
+    expect(formPresentBefore).toBeTruthy();
+    expect(await loginPage.isLoggedIn()).toBeFalsy();
 
-    // Любые логин и пароль допустимы
     await loginPage.login('username', 'password');
 
+    expect(await loginPage.isLoginFormPresent()).toBeFalsy();
     expect(await loginPage.isLoggedIn()).toBeTruthy();
   });
 
@@ -27,11 +28,15 @@ test.describe('Авторизация и выход (UI)', () => {
 
     const formPresent = await loginPage.isLoginFormPresent();
     expect(formPresent).toBeTruthy();
+    expect(await loginPage.isLoggedIn()).toBeFalsy();
 
     await loginPage.login('username', 'password');
+    expect(await loginPage.isLoginFormPresent()).toBeFalsy();
     expect(await loginPage.isLoggedIn()).toBeTruthy();
 
     await loginPage.logout();
+
+    expect(await loginPage.isLoggedIn()).toBeFalsy();
     expect(await loginPage.isLoggedOut()).toBeTruthy();
   });
 });

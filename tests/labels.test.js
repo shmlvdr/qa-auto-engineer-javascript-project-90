@@ -44,7 +44,7 @@ test.describe('Метки (Labels)', () => {
     if (count > 0) {
       const firstRow = labelsPage.items().first();
       await expect(firstRow).toBeVisible();
-      await expect(firstRow).toContainText(/./);
+      await expect(firstRow.locator('.column-name')).toContainText(/./);
     }
   });
 
@@ -88,8 +88,13 @@ test.describe('Метки (Labels)', () => {
     await labelsPage.submitForm();
     await labelsPage.expectLabelInList(labelToDelete);
 
+    const beforeCount = await labelsPage.getLabelsCount();
+
     await labelsPage.deleteLabel(labelToDelete.name);
     await labelsPage.expectLabelNotInList(labelToDelete.name);
+
+    const afterCount = await labelsPage.getLabelsCount();
+    expect(afterCount).toBeLessThan(beforeCount);
   });
 
   test('Массовое удаление меток (выделить все -> удалить выбранные)', async () => {

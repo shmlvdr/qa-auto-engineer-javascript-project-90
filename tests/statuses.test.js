@@ -45,7 +45,8 @@ test.describe('Статусы (Statuses)', () => {
     if (count > 0) {
       const firstRow = statusesPage.items().first();
       await expect(firstRow).toBeVisible();
-      await expect(firstRow).toContainText(/./);
+      await expect(firstRow.locator('.column-name')).toContainText(/./);
+      await expect(firstRow.locator('.column-slug')).toContainText(/./);
     }
   });
 
@@ -92,8 +93,13 @@ test.describe('Статусы (Statuses)', () => {
     await statusesPage.submitForm();
     await statusesPage.expectStatusInList(statusToDelete);
 
+    const beforeCount = await statusesPage.getStatusesCount();
+
     await statusesPage.deleteStatus(statusToDelete.slug);
     await statusesPage.expectStatusNotInList(statusToDelete.slug);
+
+    const afterCount = await statusesPage.getStatusesCount();
+    expect(afterCount).toBeLessThan(beforeCount);
   });
 
   test('Массовое удаление статусов (выделить всех -> удалить выбранные)', async () => {

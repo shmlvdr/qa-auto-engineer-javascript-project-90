@@ -1,4 +1,3 @@
-// tests/tasks.page.js
 import { expect } from '@playwright/test';
 import BaseListPage from './pages/baseList.page.js';
 
@@ -50,7 +49,7 @@ export default class TasksPage extends BaseListPage {
     await this.createButton().click();
   }
 
-  async fillTaskForm({ name, description, status, assignee }) {
+  async fillTaskForm({ name, description, status, assignee, labels }) {
     if (name !== undefined) {
       await this.taskTitleInput().fill(name);
     }
@@ -68,6 +67,15 @@ export default class TasksPage extends BaseListPage {
       await this.page
         .getByRole('option', { name: new RegExp(assignee, 'i') })
         .click();
+    }
+    if (labels !== undefined) {
+      await this.formLabelsSelect().click();
+      for (const label of labels) {
+        await this.page
+          .getByRole('option', { name: new RegExp(label, 'i') })
+          .click();
+      }
+      await this.page.keyboard.press('Escape');
     }
   }
 

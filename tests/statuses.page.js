@@ -1,4 +1,3 @@
-// tests/statuses.page.js
 import { expect } from '@playwright/test';
 import BaseListPage from './pages/baseList.page.js';
 
