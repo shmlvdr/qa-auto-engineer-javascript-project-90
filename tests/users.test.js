@@ -3,6 +3,17 @@ import UsersPage from './users.page.js';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 
+async function ensureUsersList(usersPage) {
+  const present = await usersPage.isUsersListPresent();
+  test.skip(!present, 'Users list not present — skipping users tests');
+}
+
+async function openAndEnsureUserForm(usersPage) {
+  await usersPage.openCreateForm();
+  const formPresent = await usersPage.isUserFormPresent();
+  expect(formPresent).toBeTruthy();
+}
+
 test.describe('Пользователи (Users)', () => {
   let usersPage;
 
@@ -12,13 +23,8 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Создание пользователя: форма отображается и данные сохраняются', async () => {
-    const listPresent = await usersPage.isUsersListPresent();
-    test.skip(!listPresent, 'Users list not present — skipping users tests');
-
-    await usersPage.openCreateForm();
-
-    const formPresent = await usersPage.isUserFormPresent();
-    expect(formPresent).toBeTruthy();
+    await ensureUsersList(usersPage);
+    await openAndEnsureUserForm(usersPage);
 
     const newUser = {
       email: 'new.user@example.com',
@@ -32,8 +38,7 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Список пользователей отображается корректно (email, имя, фамилия)', async () => {
-    const listPresent = await usersPage.isUsersListPresent();
-    test.skip(!listPresent, 'Users list not present — skipping users tests');
+    await ensureUsersList(usersPage);
 
     const count = await usersPage.getUsersCount();
     expect(count).toBeGreaterThanOrEqual(0);
@@ -46,13 +51,8 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Редактирование пользователя сохраняет изменения', async () => {
-    const listPresent = await usersPage.isUsersListPresent();
-    test.skip(!listPresent, 'Users list not present — skipping users tests');
-
-    await usersPage.openCreateForm();
-
-    let formPresent = await usersPage.isUserFormPresent();
-    expect(formPresent).toBeTruthy();
+    await ensureUsersList(usersPage);
+    await openAndEnsureUserForm(usersPage);
 
     const originalUser = {
       email: 'edit.user@example.com',
@@ -66,7 +66,7 @@ test.describe('Пользователи (Users)', () => {
 
     await usersPage.openEditFormForUser(originalUser.email);
 
-    formPresent = await usersPage.isUserFormPresent();
+    const formPresent = await usersPage.isUserFormPresent();
     expect(formPresent).toBeTruthy();
 
     const updatedUser = {
@@ -83,13 +83,8 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Валидация email при редактировании пользователя', async () => {
-    const listPresent = await usersPage.isUsersListPresent();
-    test.skip(!listPresent, 'Users list not present — skipping users tests');
-
-    await usersPage.openCreateForm();
-
-    let formPresent = await usersPage.isUserFormPresent();
-    expect(formPresent).toBeTruthy();
+    await ensureUsersList(usersPage);
+    await openAndEnsureUserForm(usersPage);
 
     const user = {
       email: 'validate.user@example.com',
@@ -103,7 +98,7 @@ test.describe('Пользователи (Users)', () => {
 
     await usersPage.openEditFormForUser(user.email);
 
-    formPresent = await usersPage.isUserFormPresent();
+    const formPresent = await usersPage.isUserFormPresent();
     expect(formPresent).toBeTruthy();
 
     await usersPage.fillUserForm({ email: 'not-an-email' });
@@ -118,19 +113,14 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Удаление одного пользователя', async () => {
-    const listPresent = await usersPage.isUsersListPresent();
-    test.skip(!listPresent, 'Users list not present — skipping users tests');
+    await ensureUsersList(usersPage);
+    await openAndEnsureUserForm(usersPage);
 
     const userToDelete = {
       email: 'delete.me@example.com',
       firstName: 'Delete',
       lastName: 'Me',
     };
-
-    await usersPage.openCreateForm();
-
-    const formPresent = await usersPage.isUserFormPresent();
-    expect(formPresent).toBeTruthy();
 
     await usersPage.fillUserForm(userToDelete);
     await usersPage.submitForm();
@@ -141,8 +131,7 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Массовое удаление пользователей (выделить всех -> удалить выбранных)', async () => {
-    const listPresent = await usersPage.isUsersListPresent();
-    test.skip(!listPresent, 'Users list not present — skipping users tests');
+    await ensureUsersList(usersPage);
 
     const users = [
       { email: 'bulk1@example.com', firstName: 'Bulk1', lastName: 'User' },
@@ -151,11 +140,7 @@ test.describe('Пользователи (Users)', () => {
     ];
 
     for (const u of users) {
-      await usersPage.openCreateForm();
-
-      const formPresent = await usersPage.isUserFormPresent();
-      expect(formPresent).toBeTruthy();
-
+      await openAndEnsureUserForm(usersPage);
       await usersPage.fillUserForm(u);
       await usersPage.submitForm();
       await usersPage.expectUserInList(u);

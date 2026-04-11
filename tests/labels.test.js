@@ -3,6 +3,17 @@ import LabelsPage from './labels.page.js';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 
+async function ensureLabelsList(labelsPage) {
+  const present = await labelsPage.isLabelsListPresent();
+  test.skip(!present, 'Labels list not present — skipping labels tests');
+}
+
+async function openAndEnsureLabelForm(labelsPage) {
+  await labelsPage.openCreateForm();
+  const formPresent = await labelsPage.isLabelFormPresent();
+  expect(formPresent).toBeTruthy();
+}
+
 test.describe('Метки (Labels)', () => {
   let labelsPage;
 
@@ -12,13 +23,8 @@ test.describe('Метки (Labels)', () => {
   });
 
   test('Создание метки: форма отображается и данные сохраняются', async () => {
-    const listPresent = await labelsPage.isLabelsListPresent();
-    test.skip(!listPresent, 'Labels list not present — skipping labels tests');
-
-    await labelsPage.openCreateForm();
-
-    const formPresent = await labelsPage.isLabelFormPresent();
-    expect(formPresent).toBeTruthy();
+    await ensureLabelsList(labelsPage);
+    await openAndEnsureLabelForm(labelsPage);
 
     const newLabel = {
       name: 'bug',
@@ -30,8 +36,7 @@ test.describe('Метки (Labels)', () => {
   });
 
   test('Список меток отображается корректно (name)', async () => {
-    const listPresent = await labelsPage.isLabelsListPresent();
-    test.skip(!listPresent, 'Labels list not present — skipping labels tests');
+    await ensureLabelsList(labelsPage);
 
     const count = await labelsPage.getLabelsCount();
     expect(count).toBeGreaterThanOrEqual(0);
@@ -44,13 +49,8 @@ test.describe('Метки (Labels)', () => {
   });
 
   test('Редактирование метки сохраняет изменения', async () => {
-    const listPresent = await labelsPage.isLabelsListPresent();
-    test.skip(!listPresent, 'Labels list not present — skipping labels tests');
-
-    await labelsPage.openCreateForm();
-
-    let formPresent = await labelsPage.isLabelFormPresent();
-    expect(formPresent).toBeTruthy();
+    await ensureLabelsList(labelsPage);
+    await openAndEnsureLabelForm(labelsPage);
 
     const originalLabel = {
       name: 'feature',
@@ -62,7 +62,7 @@ test.describe('Метки (Labels)', () => {
 
     await labelsPage.openEditFormForLabel(originalLabel.name);
 
-    formPresent = await labelsPage.isLabelFormPresent();
+    const formPresent = await labelsPage.isLabelFormPresent();
     expect(formPresent).toBeTruthy();
 
     const updatedLabel = {
@@ -77,17 +77,12 @@ test.describe('Метки (Labels)', () => {
   });
 
   test('Удаление одной метки', async () => {
-    const listPresent = await labelsPage.isLabelsListPresent();
-    test.skip(!listPresent, 'Labels list not present — skipping labels tests');
+    await ensureLabelsList(labelsPage);
+    await openAndEnsureLabelForm(labelsPage);
 
     const labelToDelete = {
       name: 'temporary',
     };
-
-    await labelsPage.openCreateForm();
-
-    const formPresent = await labelsPage.isLabelFormPresent();
-    expect(formPresent).toBeTruthy();
 
     await labelsPage.fillLabelForm(labelToDelete);
     await labelsPage.submitForm();
@@ -98,8 +93,7 @@ test.describe('Метки (Labels)', () => {
   });
 
   test('Массовое удаление меток (выделить все -> удалить выбранные)', async () => {
-    const listPresent = await labelsPage.isLabelsListPresent();
-    test.skip(!listPresent, 'Labels list not present — skipping labels tests');
+    await ensureLabelsList(labelsPage);
 
     const labels = [
       { name: 'bulk-label-1' },
@@ -108,11 +102,7 @@ test.describe('Метки (Labels)', () => {
     ];
 
     for (const l of labels) {
-      await labelsPage.openCreateForm();
-
-      const formPresent = await labelsPage.isLabelFormPresent();
-      expect(formPresent).toBeTruthy();
-
+      await openAndEnsureLabelForm(labelsPage);
       await labelsPage.fillLabelForm(l);
       await labelsPage.submitForm();
       await labelsPage.expectLabelInList(l);

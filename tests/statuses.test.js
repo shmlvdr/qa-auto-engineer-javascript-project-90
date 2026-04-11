@@ -3,6 +3,17 @@ import StatusesPage from './statuses.page.js';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 
+async function ensureStatusesList(statusesPage) {
+  const present = await statusesPage.isStatusesListPresent();
+  test.skip(!present, 'Statuses list not present — skipping statuses tests');
+}
+
+async function openAndEnsureStatusForm(statusesPage) {
+  await statusesPage.openCreateForm();
+  const formPresent = await statusesPage.isStatusFormPresent();
+  expect(formPresent).toBeTruthy();
+}
+
 test.describe('Статусы (Statuses)', () => {
   let statusesPage;
 
@@ -12,13 +23,8 @@ test.describe('Статусы (Statuses)', () => {
   });
 
   test('Создание статуса: форма отображается и данные сохраняются', async () => {
-    const listPresent = await statusesPage.isStatusesListPresent();
-    test.skip(!listPresent, 'Statuses list not present — skipping statuses tests');
-
-    await statusesPage.openCreateForm();
-
-    const formPresent = await statusesPage.isStatusFormPresent();
-    expect(formPresent).toBeTruthy();
+    await ensureStatusesList(statusesPage);
+    await openAndEnsureStatusForm(statusesPage);
 
     const newStatus = {
       name: 'In Progress',
@@ -31,8 +37,7 @@ test.describe('Статусы (Statuses)', () => {
   });
 
   test('Список статусов отображается корректно (name, slug)', async () => {
-    const listPresent = await statusesPage.isStatusesListPresent();
-    test.skip(!listPresent, 'Statuses list not present — skipping statuses tests');
+    await ensureStatusesList(statusesPage);
 
     const count = await statusesPage.getStatusesCount();
     expect(count).toBeGreaterThanOrEqual(0);
@@ -45,13 +50,8 @@ test.describe('Статусы (Statuses)', () => {
   });
 
   test('Редактирование статуса сохраняет изменения', async () => {
-    const listPresent = await statusesPage.isStatusesListPresent();
-    test.skip(!listPresent, 'Statuses list not present — skipping statuses tests');
-
-    await statusesPage.openCreateForm();
-
-    let formPresent = await statusesPage.isStatusFormPresent();
-    expect(formPresent).toBeTruthy();
+    await ensureStatusesList(statusesPage);
+    await openAndEnsureStatusForm(statusesPage);
 
     const originalStatus = {
       name: 'To Review',
@@ -64,7 +64,7 @@ test.describe('Статусы (Statuses)', () => {
 
     await statusesPage.openEditFormForStatus(originalStatus.slug);
 
-    formPresent = await statusesPage.isStatusFormPresent();
+    const formPresent = await statusesPage.isStatusFormPresent();
     expect(formPresent).toBeTruthy();
 
     const updatedStatus = {
@@ -80,18 +80,13 @@ test.describe('Статусы (Statuses)', () => {
   });
 
   test('Удаление одного статуса', async () => {
-    const listPresent = await statusesPage.isStatusesListPresent();
-    test.skip(!listPresent, 'Statuses list not present — skipping statuses tests');
+    await ensureStatusesList(statusesPage);
+    await openAndEnsureStatusForm(statusesPage);
 
     const statusToDelete = {
       name: 'Obsolete',
       slug: 'obsolete',
     };
-
-    await statusesPage.openCreateForm();
-
-    const formPresent = await statusesPage.isStatusFormPresent();
-    expect(formPresent).toBeTruthy();
 
     await statusesPage.fillStatusForm(statusToDelete);
     await statusesPage.submitForm();
@@ -102,8 +97,7 @@ test.describe('Статусы (Statuses)', () => {
   });
 
   test('Массовое удаление статусов (выделить всех -> удалить выбранные)', async () => {
-    const listPresent = await statusesPage.isStatusesListPresent();
-    test.skip(!listPresent, 'Statuses list not present — skipping statuses tests');
+    await ensureStatusesList(statusesPage);
 
     const statuses = [
       { name: 'Bulk Status 1', slug: 'bulk-status-1' },
@@ -112,11 +106,7 @@ test.describe('Статусы (Statuses)', () => {
     ];
 
     for (const s of statuses) {
-      await statusesPage.openCreateForm();
-
-      const formPresent = await statusesPage.isStatusFormPresent();
-      expect(formPresent).toBeTruthy();
-
+      await openAndEnsureStatusForm(statusesPage);
       await statusesPage.fillStatusForm(s);
       await statusesPage.submitForm();
       await statusesPage.expectStatusInList(s);

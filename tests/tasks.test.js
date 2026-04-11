@@ -10,6 +10,17 @@ const COLUMN = {
   TO_PUBLISH: 'To Publish',
 };
 
+async function ensureBoard(tasksPage) {
+  const present = await tasksPage.isBoardPresent();
+  test.skip(!present, 'Tasks board not present — skipping tasks tests');
+}
+
+async function openAndEnsureTaskForm(tasksPage) {
+  await tasksPage.openCreateForm();
+  const formPresent = await tasksPage.isTaskFormPresent();
+  expect(formPresent).toBeTruthy();
+}
+
 test.describe('Канбан-доска (Tasks)', () => {
   let tasksPage;
 
@@ -19,13 +30,8 @@ test.describe('Канбан-доска (Tasks)', () => {
   });
 
   test('Создание задачи: форма отображается и данные сохраняются', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(!boardPresent, 'Tasks board not present — skipping tasks tests');
-
-    await tasksPage.openCreateForm();
-
-    const formPresent = await tasksPage.isTaskFormPresent();
-    expect(formPresent).toBeTruthy();
+    await ensureBoard(tasksPage);
+    await openAndEnsureTaskForm(tasksPage);
 
     const newTask = {
       name: 'New task for creation',
@@ -39,8 +45,7 @@ test.describe('Канбан-доска (Tasks)', () => {
   });
 
   test('Список задач и колонки отображаются корректно', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(!boardPresent, 'Tasks board not present — skipping tasks tests');
+    await ensureBoard(tasksPage);
 
     await expect(tasksPage.columnByTitle(COLUMN.DRAFT)).toBeVisible({ timeout: 500 });
     await expect(tasksPage.columnByTitle(COLUMN.TO_REVIEW)).toBeVisible({ timeout: 500 });
@@ -52,12 +57,8 @@ test.describe('Канбан-доска (Tasks)', () => {
   });
 
   test('Редактирование задачи сохраняет изменения и меняет колонку', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(!boardPresent, 'Tasks board not present — skipping tasks tests');
-
-    await tasksPage.openCreateForm();
-    let formPresent = await tasksPage.isTaskFormPresent();
-    expect(formPresent).toBeTruthy();
+    await ensureBoard(tasksPage);
+    await openAndEnsureTaskForm(tasksPage);
 
     const originalTask = {
       name: 'Task to edit',
@@ -70,7 +71,8 @@ test.describe('Канбан-доска (Tasks)', () => {
     await tasksPage.expectTaskInColumn(originalTask, COLUMN.DRAFT);
 
     await tasksPage.openEditFormForTask(originalTask.name);
-    formPresent = await tasksPage.isTaskFormPresent();
+
+    const formPresent = await tasksPage.isTaskFormPresent();
     expect(formPresent).toBeTruthy();
 
     const updatedTask = {
@@ -91,8 +93,7 @@ test.describe('Канбан-доска (Tasks)', () => {
   });
 
   test('Фильтрация задач по статусу', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(!boardPresent, 'Tasks board not present — skipping tasks tests');
+    await ensureBoard(tasksPage);
 
     const taskDraft = {
       name: 'Filter Draft task',
@@ -106,14 +107,12 @@ test.describe('Канбан-доска (Tasks)', () => {
       status: COLUMN.TO_REVIEW,
     };
 
-    await tasksPage.openCreateForm();
-    expect(await tasksPage.isTaskFormPresent()).toBeTruthy();
+    await openAndEnsureTaskForm(tasksPage);
     await tasksPage.fillTaskForm(taskDraft);
     await tasksPage.submitTaskForm();
     await tasksPage.expectTaskInColumn(taskDraft, COLUMN.DRAFT);
 
-    await tasksPage.openCreateForm();
-    expect(await tasksPage.isTaskFormPresent()).toBeTruthy();
+    await openAndEnsureTaskForm(tasksPage);
     await tasksPage.fillTaskForm(taskToReview);
     await tasksPage.submitTaskForm();
     await tasksPage.expectTaskInColumn(taskToReview, COLUMN.TO_REVIEW);
@@ -124,12 +123,8 @@ test.describe('Канбан-доска (Tasks)', () => {
   });
 
   test('Перемещение задачи между колонками (DnD)', async () => {
-    const boardPresent = await tasksPage.isBoardPresent();
-    test.skip(!boardPresent, 'Tasks board not present — skipping tasks tests');
-
-    await tasksPage.openCreateForm();
-    const formPresent = await tasksPage.isTaskFormPresent();
-    expect(formPresent).toBeTruthy();
+    await ensureBoard(tasksPage);
+    await openAndEnsureTaskForm(tasksPage);
 
     const movableTask = {
       name: 'Task to move by DnD',
