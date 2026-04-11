@@ -13,34 +13,44 @@ test.describe('Авторизация и выход (UI)', () => {
   test('Успешный вход (символический)', async () => {
     await loginPage.navigate();
 
-    // До логина: форма видна, профиля нет
-    expect(await loginPage.isLoginFormPresent()).toBeTruthy();
-    expect(await loginPage.isLoggedIn()).toBeFalsy();
+    const formPresentBefore = await loginPage.isLoginFormPresent();
+    const loggedInBefore = await loginPage.isLoggedIn();
+
+    expect(formPresentBefore).toBeTruthy();
+    expect(loggedInBefore).toBeFalsy();
 
     await loginPage.login('username', 'password');
 
-    // После логина: форма скрыта, профиль виден
-    expect(await loginPage.isLoginFormPresent()).toBeFalsy();
-    expect(await loginPage.isLoggedIn()).toBeTruthy();
+    const formPresentAfter = await loginPage.isLoginFormPresent();
+    const loggedInAfter = await loginPage.isLoggedIn();
+
+    expect(formPresentAfter).toBeFalsy();
+    expect(loggedInAfter).toBeTruthy();
   });
 
   test('Выход из системы (символический)', async () => {
     await loginPage.navigate();
 
-    // Начальное состояние
-    expect(await loginPage.isLoginFormPresent()).toBeTruthy();
-    expect(await loginPage.isLoggedIn()).toBeFalsy();
+    const formPresentBefore = await loginPage.isLoginFormPresent();
+    const loggedInBefore = await loginPage.isLoggedIn();
+
+    expect(formPresentBefore).toBeTruthy();
+    expect(loggedInBefore).toBeFalsy();
 
     await loginPage.login('username', 'password');
 
-    // После логина
-    expect(await loginPage.isLoginFormPresent()).toBeFalsy();
-    expect(await loginPage.isLoggedIn()).toBeTruthy();
+    const formPresentAfterLogin = await loginPage.isLoginFormPresent();
+    const loggedInAfterLogin = await loginPage.isLoggedIn();
+
+    expect(formPresentAfterLogin).toBeFalsy();
+    expect(loggedInAfterLogin).toBeTruthy();
 
     await loginPage.logout();
 
-    // После выхода: профиля нет, форма снова есть
-    expect(await loginPage.isLoggedIn()).toBeFalsy();
-    expect(await loginPage.isLoggedOut()).toBeTruthy();
+    const loggedInAfterLogout = await loginPage.isLoggedIn();
+    const loggedOutAfterLogout = await loginPage.isLoggedOut();
+
+    expect(loggedInAfterLogout).toBeFalsy();
+    expect(loggedOutAfterLogout).toBeTruthy();
   });
 });

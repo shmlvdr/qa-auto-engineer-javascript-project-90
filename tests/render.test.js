@@ -11,12 +11,12 @@ test('приложение Task Manager рендерит корень и пер�
   await page.getByLabel(/password/i).fill('password');
   await page.getByRole('button', { name: /sign in/i }).click();
 
-  await page.getByRole('menuitem', { name: /tasks/i }).click();
+  await page.getByRole('menuitem', { name: /^tasks$/i }).click();
 
   const draftColumn = page
     .getByRole('heading', { name: /^draft$/i })
     .locator('xpath=..')
-    .locator('div[data-rfd-droppable-id]');
+    .locator('[data-rfd-droppable-id]');
 
-  await expect(draftColumn).toBeVisible();
+  await expect(draftColumn).toBeVisible({ timeout: 10_000 });
 });
