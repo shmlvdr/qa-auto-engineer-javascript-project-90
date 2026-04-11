@@ -1,23 +1,32 @@
+// tests/users.page.js
 import { expect } from '@playwright/test';
 import BaseListPage from './pages/baseList.page.js';
 
 export default class UsersPage extends BaseListPage {
   constructor(page, baseUrl = 'http://localhost:5173') {
-    super(page, baseUrl, {
-      listTestId: 'users-table',
-      rowTestId: 'user-row',
-      createButtonTestId: 'user-create-button',
-    });
+    super(page, baseUrl, '/users');
 
-    this.selectAllCheckbox = () => this.page.getByTestId('user-select-all');
+    this.emailInput = () => this.page.locator('input[name="email"]');
+    this.firstNameInput = () => this.page.locator('input[name="firstName"]');
+    this.lastNameInput = () => this.page.locator('input[name="lastName"]');
+    this.submitButton = () =>
+      this.page.getByRole('button', { name: /save/i });
+
+    this.selectAllCheckbox = () =>
+      this.page.getByRole('checkbox', { name: /select all/i });
     this.deleteSelectedButton = () =>
-      this.page.getByTestId('user-delete-selected');
+      this.page.getByRole('button', { name: /delete/i });
 
-    this.emailInput = () => this.page.getByTestId('user-email');
-    this.firstNameInput = () => this.page.getByTestId('user-firstName');
-    this.lastNameInput = () => this.page.getByTestId('user-lastName');
-    this.submitButton = () => this.page.getByTestId('user-submit');
-    this.emailError = () => this.page.getByTestId('user-email-error');
+    this.emailError = () =>
+      this.page.locator('[id*="email"][id$="-helper-text"]');
+  }
+
+  listRoot() {
+    return this.page.locator('table.RaDatagrid-table');
+  }
+
+  items() {
+    return this.page.locator('tbody.RaDatagrid-tbody tr.RaDatagrid-row');
   }
 
   async goto(path = '/users') {
@@ -51,27 +60,40 @@ export default class UsersPage extends BaseListPage {
   }
 
   async getUserRowByEmail(email) {
-    return this.getRowByKeyText(email);
+    return this.items().filter({
+      has: this.page.locator('.column-email'),
+      hasText: email,
+    });
   }
 
   async expectUserInList({ email, firstName, lastName }) {
-    await this.expectInList(email, [firstName, lastName]);
+    const row = await this.getUserRowByEmail(email);
+    await expect(row).toHaveCount(1);
+    if (firstName) {
+      await expect(row.locator('.column-firstName')).toContainText(firstName);
+    }
+    if (lastName) {
+      await expect(row.locator('.column-lastName')).toContainText(lastName);
+    }
   }
 
   async expectUserNotInList(email) {
-    await this.expectNotInList(email);
+    const row = await this.getUserRowByEmail(email);
+    await expect(row).toHaveCount(0);
   }
 
   async openEditFormForUser(email) {
     const row = await this.getUserRowByEmail(email);
-    const editButton = row.getByTestId('user-edit');
-    await editButton.click();
+    await expect(row).toHaveCount(1);
+    await row.click();
   }
 
   async deleteUser(email) {
     const row = await this.getUserRowByEmail(email);
-    const deleteButton = row.getByTestId('user-delete');
-    await deleteButton.click();
+    await expect(row).toHaveCount(1);
+    const checkbox = row.locator('input[type="checkbox"]');
+    await checkbox.check();
+    await this.deleteSelectedButton().click();
   }
 
   async getUsersCount() {

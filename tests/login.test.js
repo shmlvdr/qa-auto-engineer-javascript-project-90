@@ -12,30 +12,24 @@ test.describe('Авторизация и выход (UI)', () => {
 
   test('Успешный вход (символический)', async () => {
     await loginPage.navigate();
-    const present = await loginPage.isLoginFormPresent();
-    test.skip(
-      !present,
-      'Login form not present at /login — skipping symbolic login test',
-    );
 
-    const user = 'anyUser';
-    await loginPage.login(user, 'anyPassword');
+    const formPresent = await loginPage.isLoginFormPresent();
+    expect(formPresent).toBeTruthy();
 
-    const loggedIn = await loginPage.isLoggedIn(user);
-    expect(loggedIn).toBeTruthy();
+    // Любые логин и пароль допустимы
+    await loginPage.login('username', 'password');
+
+    expect(await loginPage.isLoggedIn()).toBeTruthy();
   });
 
   test('Выход из системы (символический)', async () => {
     await loginPage.navigate();
-    const present = await loginPage.isLoginFormPresent();
-    test.skip(
-      !present,
-      'Login form not present at /login — skipping symbolic logout test',
-    );
 
-    const user = 'anyUser';
-    await loginPage.login(user, 'anyPassword');
-    expect(await loginPage.isLoggedIn(user)).toBeTruthy();
+    const formPresent = await loginPage.isLoginFormPresent();
+    expect(formPresent).toBeTruthy();
+
+    await loginPage.login('username', 'password');
+    expect(await loginPage.isLoggedIn()).toBeTruthy();
 
     await loginPage.logout();
     expect(await loginPage.isLoggedOut()).toBeTruthy();

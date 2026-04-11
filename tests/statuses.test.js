@@ -1,10 +1,5 @@
 import { test, expect } from '@playwright/test';
 import StatusesPage from './statuses.page.js';
-import {
-  ensureListPresentOrSkip,
-  ensureFormPresentOrSkip,
-  ensureLocatorVisibleOrSkip,
-} from './utils/crudHelpers.js';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 
@@ -17,18 +12,13 @@ test.describe('Статусы (Statuses)', () => {
   });
 
   test('Создание статуса: форма отображается и данные сохраняются', async () => {
-    await ensureListPresentOrSkip(
-      statusesPage,
-      'isStatusesListPresent',
-      'Statuses list not present at /statuses — skipping',
-    );
+    const listPresent = await statusesPage.isStatusesListPresent();
+    test.skip(!listPresent, 'Statuses list not present — skipping statuses tests');
 
     await statusesPage.openCreateForm();
-    await ensureFormPresentOrSkip(
-      statusesPage,
-      'isStatusFormPresent',
-      'Status form not present after clicking create — skipping',
-    );
+
+    const formPresent = await statusesPage.isStatusFormPresent();
+    expect(formPresent).toBeTruthy();
 
     const newStatus = {
       name: 'In Progress',
@@ -41,35 +31,27 @@ test.describe('Статусы (Statuses)', () => {
   });
 
   test('Список статусов отображается корректно (name, slug)', async () => {
-    await ensureListPresentOrSkip(
-      statusesPage,
-      'isStatusesListPresent',
-      'Statuses list not present at /statuses — skipping',
-    );
+    const listPresent = await statusesPage.isStatusesListPresent();
+    test.skip(!listPresent, 'Statuses list not present — skipping statuses tests');
 
     const count = await statusesPage.getStatusesCount();
     expect(count).toBeGreaterThanOrEqual(0);
 
     if (count > 0) {
-      const firstRow = statusesPage.rows().first();
+      const firstRow = statusesPage.items().first();
       await expect(firstRow).toBeVisible();
       await expect(firstRow).toContainText(/./);
     }
   });
 
   test('Редактирование статуса сохраняет изменения', async () => {
-    await ensureListPresentOrSkip(
-      statusesPage,
-      'isStatusesListPresent',
-      'Statuses list not present at /statuses — skipping',
-    );
+    const listPresent = await statusesPage.isStatusesListPresent();
+    test.skip(!listPresent, 'Statuses list not present — skipping statuses tests');
 
     await statusesPage.openCreateForm();
-    await ensureFormPresentOrSkip(
-      statusesPage,
-      'isStatusFormPresent',
-      'Status form not present for create — skipping',
-    );
+
+    let formPresent = await statusesPage.isStatusFormPresent();
+    expect(formPresent).toBeTruthy();
 
     const originalStatus = {
       name: 'To Review',
@@ -81,11 +63,9 @@ test.describe('Статусы (Statuses)', () => {
     await statusesPage.expectStatusInList(originalStatus);
 
     await statusesPage.openEditFormForStatus(originalStatus.slug);
-    await ensureFormPresentOrSkip(
-      statusesPage,
-      'isStatusFormPresent',
-      'Status form not present for edit — skipping',
-    );
+
+    formPresent = await statusesPage.isStatusFormPresent();
+    expect(formPresent).toBeTruthy();
 
     const updatedStatus = {
       name: 'In Review',
@@ -100,11 +80,8 @@ test.describe('Статусы (Statuses)', () => {
   });
 
   test('Удаление одного статуса', async () => {
-    await ensureListPresentOrSkip(
-      statusesPage,
-      'isStatusesListPresent',
-      'Statuses list not present at /statuses — skipping',
-    );
+    const listPresent = await statusesPage.isStatusesListPresent();
+    test.skip(!listPresent, 'Statuses list not present — skipping statuses tests');
 
     const statusToDelete = {
       name: 'Obsolete',
@@ -112,11 +89,9 @@ test.describe('Статусы (Statuses)', () => {
     };
 
     await statusesPage.openCreateForm();
-    await ensureFormPresentOrSkip(
-      statusesPage,
-      'isStatusFormPresent',
-      'Status form not present for create — skipping',
-    );
+
+    const formPresent = await statusesPage.isStatusFormPresent();
+    expect(formPresent).toBeTruthy();
 
     await statusesPage.fillStatusForm(statusToDelete);
     await statusesPage.submitForm();
@@ -127,11 +102,8 @@ test.describe('Статусы (Statuses)', () => {
   });
 
   test('Массовое удаление статусов (выделить всех -> удалить выбранные)', async () => {
-    await ensureListPresentOrSkip(
-      statusesPage,
-      'isStatusesListPresent',
-      'Statuses list not present at /statuses — skipping',
-    );
+    const listPresent = await statusesPage.isStatusesListPresent();
+    test.skip(!listPresent, 'Statuses list not present — skipping statuses tests');
 
     const statuses = [
       { name: 'Bulk Status 1', slug: 'bulk-status-1' },
@@ -141,11 +113,9 @@ test.describe('Статусы (Statuses)', () => {
 
     for (const s of statuses) {
       await statusesPage.openCreateForm();
-      await ensureFormPresentOrSkip(
-        statusesPage,
-        'isStatusFormPresent',
-        'Status form not present for create — skipping (bulk)',
-      );
+
+      const formPresent = await statusesPage.isStatusFormPresent();
+      expect(formPresent).toBeTruthy();
 
       await statusesPage.fillStatusForm(s);
       await statusesPage.submitForm();
@@ -154,21 +124,19 @@ test.describe('Статусы (Statuses)', () => {
 
     const beforeCount = await statusesPage.getStatusesCount();
 
-    await ensureLocatorVisibleOrSkip(
-      statusesPage.selectAllCheckbox(),
-      'Bulk selection UI for statuses not implemented — skipping',
-    );
-    await ensureLocatorVisibleOrSkip(
-      statusesPage.deleteSelectedButton(),
-      'Bulk delete UI for statuses not implemented — skipping',
-    );
+    try {
+      await expect(statusesPage.selectAllCheckbox()).toBeVisible({ timeout: 1000 });
+      await expect(statusesPage.deleteSelectedButton()).toBeVisible({ timeout: 1000 });
+    } catch {
+      test.skip(true, 'Bulk selection/delete UI for statuses not implemented — skipping');
+    }
 
     await statusesPage.selectAllStatuses();
 
-    const rows = statusesPage.rows();
+    const rows = statusesPage.items();
     const rowsCount = await rows.count();
     for (let i = 0; i < rowsCount; i += 1) {
-      const checkbox = rows.nth(i).getByTestId('status-select');
+      const checkbox = rows.nth(i).locator('input[type="checkbox"]');
       await expect(checkbox).toBeChecked();
     }
 

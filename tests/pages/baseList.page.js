@@ -1,18 +1,26 @@
 import { expect } from '@playwright/test';
 
 export default class BaseListPage {
-  constructor(page, baseUrl, config) {
+  constructor(page, baseUrl, resourcePath) {
     this.page = page;
     this.baseUrl = baseUrl.replace(/\/$/, '');
-    this.config = config;
-
-    this.listRoot = () => this.page.getByTestId(config.listTestId);
-    this.rows = () => this.page.getByTestId(config.rowTestId);
-    this.createButton = () => this.page.getByTestId(config.createButtonTestId);
+    this.resourcePath = resourcePath;
   }
 
-  async goto(path) {
+  async goto(path = this.resourcePath) {
     await this.page.goto(this.baseUrl + path);
+  }
+
+  // Дочерние классы должны реализовать:
+  // listRoot()  — корневой контейнер списка/доски
+  // items()     — коллекция элементов (строки/карточки)
+
+  createButton() {
+    return this.page.getByRole('link', { name: /create/i });
+  }
+
+  exportButton() {
+    return this.page.getByRole('button', { name: /export/i });
   }
 
   async isListPresent() {
@@ -28,26 +36,11 @@ export default class BaseListPage {
     await this.createButton().click();
   }
 
-  async getRowByKeyText(keyText) {
-    return this.rows().filter({ hasText: keyText });
-  }
-
-  async expectInList(keyText, otherTexts = []) {
-    const row = await this.getRowByKeyText(keyText);
-    await expect(row).toBeVisible();
-    for (const t of otherTexts) {
-      if (t) {
-        await expect(row).toContainText(t);
-      }
-    }
-  }
-
-  async expectNotInList(keyText) {
-    const row = await this.getRowByKeyText(keyText);
-    await expect(row).toHaveCount(0);
+  async clickExport() {
+    await this.exportButton().click();
   }
 
   async getItemsCount() {
-    return await this.rows().count();
+    return this.items().count();
   }
 }

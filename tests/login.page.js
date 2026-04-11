@@ -1,18 +1,23 @@
+// tests/login.page.js
 import { expect } from '@playwright/test';
 
 export default class LoginPage {
   constructor(page, baseUrl = 'http://localhost:5173') {
     this.page = page;
     this.baseUrl = baseUrl.replace(/\/$/, '');
-    this.loginInput = () => this.page.getByTestId('login-input');
-    this.passwordInput = () => this.page.getByTestId('password-input');
+
+    this.loginInput = () => this.page.getByLabel(/username/i);
+    this.passwordInput = () => this.page.getByLabel(/password/i);
     this.signInButton = () =>
       this.page.getByRole('button', { name: /sign in/i });
-    this.protectedContent = () => this.page.getByTestId('protected');
-    this.logoutButton = () =>
-      this.page.getByRole('button', { name: /logout/i });
-    this.greeting = (username) =>
-      this.page.getByText(new RegExp(`Welcome,\\s*${username}`, 'i'));
+
+    this.profileButton = () =>
+      this.page.getByRole('button', { name: /jane doe|profile/i });
+
+    this.logoutMenuItem = () =>
+      this.page
+        .locator('li[role="menuitem"]')
+        .filter({ hasText: 'Logout' });
   }
 
   async goto(path = '/login') {
@@ -40,33 +45,25 @@ export default class LoginPage {
     await this.signInButton().click();
   }
 
-  async isLoggedIn(username) {
+  async isLoggedIn() {
     try {
-      await expect(this.greeting(username)).toBeVisible({ timeout: 2000 });
+      await expect(this.profileButton()).toBeVisible({ timeout: 2000 });
       return true;
     } catch {
-      try {
-        await expect(this.protectedContent()).toBeVisible({ timeout: 2000 });
-        return true;
-      } catch {
-        return false;
-      }
+      return false;
     }
   }
 
   async logout() {
-    await this.logoutButton().click();
+    try {
+      await this.profileButton().click();
+    } catch {}
+    await this.logoutMenuItem().click();
   }
 
   async isLoggedOut() {
     try {
-      await expect(this.protectedContent()).toBeHidden({ timeout: 2000 });
-    } catch {
-      // игнорируем отсутствие protected-блока
-    }
-
-    try {
-      await expect(this.loginInput()).toBeVisible({ timeout: 1000 });
+      await expect(this.loginInput()).toBeVisible({ timeout: 2000 });
       return true;
     } catch {
       return false;

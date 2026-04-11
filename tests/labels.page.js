@@ -4,20 +4,24 @@ import BaseListPage from './pages/baseList.page.js';
 
 export default class LabelsPage extends BaseListPage {
   constructor(page, baseUrl = 'http://localhost:5173') {
-    super(page, baseUrl, {
-      listTestId: 'labels-table',
-      rowTestId: 'label-row',
-      createButtonTestId: 'label-create-button',
-    });
+    super(page, baseUrl, '/labels');
 
-    this.selectAllCheckbox = () => this.page.getByTestId('label-select-all');
+    this.nameInput = () => this.page.locator('input[name="name"]');
+    this.submitButton = () =>
+      this.page.getByRole('button', { name: /save/i });
+
+    this.selectAllCheckbox = () =>
+      this.page.getByRole('checkbox', { name: /select all/i });
     this.deleteSelectedButton = () =>
-      this.page.getByTestId('label-delete-selected');
+      this.page.getByRole('button', { name: /delete/i });
+  }
 
-    this.nameInput = () => this.page.getByTestId('label-name');
-    this.slugInput = () => this.page.getByTestId('label-slug');
-    this.colorInput = () => this.page.getByTestId('label-color');
-    this.submitButton = () => this.page.getByTestId('label-submit');
+  listRoot() {
+    return this.page.locator('table.RaDatagrid-table');
+  }
+
+  items() {
+    return this.page.locator('tbody.RaDatagrid-tbody tr.RaDatagrid-row');
   }
 
   async goto(path = '/labels') {
@@ -31,7 +35,6 @@ export default class LabelsPage extends BaseListPage {
   async isLabelFormPresent() {
     try {
       await expect(this.nameInput()).toBeVisible({ timeout: 1000 });
-      await expect(this.slugInput()).toBeVisible({ timeout: 1000 });
       await expect(this.submitButton()).toBeVisible({ timeout: 1000 });
       return true;
     } catch {
@@ -39,40 +42,43 @@ export default class LabelsPage extends BaseListPage {
     }
   }
 
-  async fillLabelForm({ name, slug, color }) {
+  async fillLabelForm({ name }) {
     if (name !== undefined) await this.nameInput().fill(name);
-    if (slug !== undefined) await this.slugInput().fill(slug);
-    if (color !== undefined && (await this.colorInput().count()) > 0) {
-      await this.colorInput().fill(color);
-    }
   }
 
   async submitForm() {
     await this.submitButton().click();
   }
 
-  async getLabelRowBySlug(slug) {
-    return this.getRowByKeyText(slug);
+  async getLabelRowByName(name) {
+    return this.items().filter({
+      has: this.page.locator('.column-name'),
+      hasText: name,
+    });
   }
 
-  async expectLabelInList({ name, slug }) {
-    await this.expectInList(slug, [name]);
+  async expectLabelInList({ name }) {
+    const row = await this.getLabelRowByName(name);
+    await expect(row).toHaveCount(1);
   }
 
-  async expectLabelNotInList(slug) {
-    await this.expectNotInList(slug);
+  async expectLabelNotInList(name) {
+    const row = await this.getLabelRowByName(name);
+    await expect(row).toHaveCount(0);
   }
 
-  async openEditFormForLabel(slug) {
-    const row = await this.getLabelRowBySlug(slug);
-    const editButton = row.getByTestId('label-edit');
-    await editButton.click();
+  async openEditFormForLabel(name) {
+    const row = await this.getLabelRowByName(name);
+    await expect(row).toHaveCount(1);
+    await row.click();
   }
 
-  async deleteLabel(slug) {
-    const row = await this.getLabelRowBySlug(slug);
-    const deleteButton = row.getByTestId('label-delete');
-    await deleteButton.click();
+  async deleteLabel(name) {
+    const row = await this.getLabelRowByName(name);
+    await expect(row).toHaveCount(1);
+    const checkbox = row.locator('input[type="checkbox"]');
+    await checkbox.check();
+    await this.deleteSelectedButton().click();
   }
 
   async getLabelsCount() {

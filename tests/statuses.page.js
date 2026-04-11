@@ -1,24 +1,31 @@
+// tests/statuses.page.js
 import { expect } from '@playwright/test';
 import BaseListPage from './pages/baseList.page.js';
 
 export default class StatusesPage extends BaseListPage {
   constructor(page, baseUrl = 'http://localhost:5173') {
-    super(page, baseUrl, {
-      listTestId: 'statuses-table',
-      rowTestId: 'status-row',
-      createButtonTestId: 'status-create-button',
-    });
+    super(page, baseUrl, '/task_statuses');
 
-    this.selectAllCheckbox = () => this.page.getByTestId('status-select-all');
+    this.nameInput = () => this.page.locator('input[name="name"]');
+    this.slugInput = () => this.page.locator('input[name="slug"]');
+    this.submitButton = () =>
+      this.page.getByRole('button', { name: /save/i });
+
+    this.selectAllCheckbox = () =>
+      this.page.getByRole('checkbox', { name: /select all/i });
     this.deleteSelectedButton = () =>
-      this.page.getByTestId('status-delete-selected');
-
-    this.nameInput = () => this.page.getByTestId('status-name');
-    this.slugInput = () => this.page.getByTestId('status-slug');
-    this.submitButton = () => this.page.getByTestId('status-submit');
+      this.page.getByRole('button', { name: /delete/i });
   }
 
-  async goto(path = '/statuses') {
+  listRoot() {
+    return this.page.locator('table.RaDatagrid-table');
+  }
+
+  items() {
+    return this.page.locator('tbody.RaDatagrid-tbody tr.RaDatagrid-row');
+  }
+
+  async goto(path = '/task_statuses') {
     await super.goto(path);
   }
 
@@ -47,27 +54,37 @@ export default class StatusesPage extends BaseListPage {
   }
 
   async getStatusRowBySlug(slug) {
-    return this.getRowByKeyText(slug);
+    return this.items().filter({
+      has: this.page.locator('.column-slug'),
+      hasText: slug,
+    });
   }
 
   async expectStatusInList({ name, slug }) {
-    await this.expectInList(slug, [name]);
+    const row = await this.getStatusRowBySlug(slug);
+    await expect(row).toHaveCount(1);
+    if (name) {
+      await expect(row.locator('.column-name')).toContainText(name);
+    }
   }
 
   async expectStatusNotInList(slug) {
-    await this.expectNotInList(slug);
+    const row = await this.getStatusRowBySlug(slug);
+    await expect(row).toHaveCount(0);
   }
 
   async openEditFormForStatus(slug) {
     const row = await this.getStatusRowBySlug(slug);
-    const editButton = row.getByTestId('status-edit');
-    await editButton.click();
+    await expect(row).toHaveCount(1);
+    await row.click();
   }
 
   async deleteStatus(slug) {
     const row = await this.getStatusRowBySlug(slug);
-    const deleteButton = row.getByTestId('status-delete');
-    await deleteButton.click();
+    await expect(row).toHaveCount(1);
+    const checkbox = row.locator('input[type="checkbox"]');
+    await checkbox.check();
+    await this.deleteSelectedButton().click();
   }
 
   async getStatusesCount() {

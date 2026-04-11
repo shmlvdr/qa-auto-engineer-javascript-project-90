@@ -1,10 +1,5 @@
 import { test, expect } from '@playwright/test';
 import UsersPage from './users.page.js';
-import {
-  ensureListPresentOrSkip,
-  ensureFormPresentOrSkip,
-  ensureLocatorVisibleOrSkip,
-} from './utils/crudHelpers.js';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 
@@ -17,18 +12,13 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Создание пользователя: форма отображается и данные сохраняются', async () => {
-    await ensureListPresentOrSkip(
-      usersPage,
-      'isUsersListPresent',
-      'Users list not present at /users — skipping',
-    );
+    const listPresent = await usersPage.isUsersListPresent();
+    test.skip(!listPresent, 'Users list not present — skipping users tests');
 
     await usersPage.openCreateForm();
-    await ensureFormPresentOrSkip(
-      usersPage,
-      'isUserFormPresent',
-      'User form not present after clicking create — skipping',
-    );
+
+    const formPresent = await usersPage.isUserFormPresent();
+    expect(formPresent).toBeTruthy();
 
     const newUser = {
       email: 'new.user@example.com',
@@ -42,35 +32,27 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Список пользователей отображается корректно (email, имя, фамилия)', async () => {
-    await ensureListPresentOrSkip(
-      usersPage,
-      'isUsersListPresent',
-      'Users list not present at /users — skipping',
-    );
+    const listPresent = await usersPage.isUsersListPresent();
+    test.skip(!listPresent, 'Users list not present — skipping users tests');
 
     const count = await usersPage.getUsersCount();
     expect(count).toBeGreaterThanOrEqual(0);
 
     if (count > 0) {
-      const firstRow = usersPage.rows().first();
+      const firstRow = usersPage.items().first();
       await expect(firstRow).toBeVisible();
       await expect(firstRow).toContainText('@');
     }
   });
 
   test('Редактирование пользователя сохраняет изменения', async () => {
-    await ensureListPresentOrSkip(
-      usersPage,
-      'isUsersListPresent',
-      'Users list not present at /users — skipping',
-    );
+    const listPresent = await usersPage.isUsersListPresent();
+    test.skip(!listPresent, 'Users list not present — skipping users tests');
 
     await usersPage.openCreateForm();
-    await ensureFormPresentOrSkip(
-      usersPage,
-      'isUserFormPresent',
-      'User form not present for create — skipping',
-    );
+
+    let formPresent = await usersPage.isUserFormPresent();
+    expect(formPresent).toBeTruthy();
 
     const originalUser = {
       email: 'edit.user@example.com',
@@ -83,11 +65,9 @@ test.describe('Пользователи (Users)', () => {
     await usersPage.expectUserInList(originalUser);
 
     await usersPage.openEditFormForUser(originalUser.email);
-    await ensureFormPresentOrSkip(
-      usersPage,
-      'isUserFormPresent',
-      'User form not present for edit — skipping',
-    );
+
+    formPresent = await usersPage.isUserFormPresent();
+    expect(formPresent).toBeTruthy();
 
     const updatedUser = {
       email: 'edited.user@example.com',
@@ -103,18 +83,13 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Валидация email при редактировании пользователя', async () => {
-    await ensureListPresentOrSkip(
-      usersPage,
-      'isUsersListPresent',
-      'Users list not present at /users — skipping',
-    );
+    const listPresent = await usersPage.isUsersListPresent();
+    test.skip(!listPresent, 'Users list not present — skipping users tests');
 
     await usersPage.openCreateForm();
-    await ensureFormPresentOrSkip(
-      usersPage,
-      'isUserFormPresent',
-      'User form not present for create — skipping',
-    );
+
+    let formPresent = await usersPage.isUserFormPresent();
+    expect(formPresent).toBeTruthy();
 
     const user = {
       email: 'validate.user@example.com',
@@ -127,11 +102,9 @@ test.describe('Пользователи (Users)', () => {
     await usersPage.expectUserInList(user);
 
     await usersPage.openEditFormForUser(user.email);
-    await ensureFormPresentOrSkip(
-      usersPage,
-      'isUserFormPresent',
-      'User form not present for edit — skipping',
-    );
+
+    formPresent = await usersPage.isUserFormPresent();
+    expect(formPresent).toBeTruthy();
 
     await usersPage.fillUserForm({ email: 'not-an-email' });
     await usersPage.submitForm();
@@ -145,11 +118,8 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Удаление одного пользователя', async () => {
-    await ensureListPresentOrSkip(
-      usersPage,
-      'isUsersListPresent',
-      'Users list not present at /users — skipping',
-    );
+    const listPresent = await usersPage.isUsersListPresent();
+    test.skip(!listPresent, 'Users list not present — skipping users tests');
 
     const userToDelete = {
       email: 'delete.me@example.com',
@@ -158,11 +128,9 @@ test.describe('Пользователи (Users)', () => {
     };
 
     await usersPage.openCreateForm();
-    await ensureFormPresentOrSkip(
-      usersPage,
-      'isUserFormPresent',
-      'User form not present for create — skipping',
-    );
+
+    const formPresent = await usersPage.isUserFormPresent();
+    expect(formPresent).toBeTruthy();
 
     await usersPage.fillUserForm(userToDelete);
     await usersPage.submitForm();
@@ -173,11 +141,8 @@ test.describe('Пользователи (Users)', () => {
   });
 
   test('Массовое удаление пользователей (выделить всех -> удалить выбранных)', async () => {
-    await ensureListPresentOrSkip(
-      usersPage,
-      'isUsersListPresent',
-      'Users list not present at /users — skipping',
-    );
+    const listPresent = await usersPage.isUsersListPresent();
+    test.skip(!listPresent, 'Users list not present — skipping users tests');
 
     const users = [
       { email: 'bulk1@example.com', firstName: 'Bulk1', lastName: 'User' },
@@ -187,11 +152,9 @@ test.describe('Пользователи (Users)', () => {
 
     for (const u of users) {
       await usersPage.openCreateForm();
-      await ensureFormPresentOrSkip(
-        usersPage,
-        'isUserFormPresent',
-        'User form not present for create — skipping (bulk)',
-      );
+
+      const formPresent = await usersPage.isUserFormPresent();
+      expect(formPresent).toBeTruthy();
 
       await usersPage.fillUserForm(u);
       await usersPage.submitForm();
@@ -200,21 +163,19 @@ test.describe('Пользователи (Users)', () => {
 
     const beforeCount = await usersPage.getUsersCount();
 
-    await ensureLocatorVisibleOrSkip(
-      usersPage.selectAllCheckbox(),
-      'Bulk selection UI for users not implemented — skipping',
-    );
-    await ensureLocatorVisibleOrSkip(
-      usersPage.deleteSelectedButton(),
-      'Bulk delete UI for users not implemented — skipping',
-    );
+    try {
+      await expect(usersPage.selectAllCheckbox()).toBeVisible({ timeout: 1000 });
+      await expect(usersPage.deleteSelectedButton()).toBeVisible({ timeout: 1000 });
+    } catch {
+      test.skip(true, 'Bulk selection/delete UI for users not implemented — skipping');
+    }
 
     await usersPage.selectAllUsers();
 
-    const rows = usersPage.rows();
+    const rows = usersPage.items();
     const rowsCount = await rows.count();
     for (let i = 0; i < rowsCount; i += 1) {
-      const checkbox = rows.nth(i).getByTestId('user-select');
+      const checkbox = rows.nth(i).locator('input[type="checkbox"]');
       await expect(checkbox).toBeChecked();
     }
 

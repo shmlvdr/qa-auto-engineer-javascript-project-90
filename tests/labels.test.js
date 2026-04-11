@@ -1,10 +1,5 @@
 import { test, expect } from '@playwright/test';
 import LabelsPage from './labels.page.js';
-import {
-  ensureListPresentOrSkip,
-  ensureFormPresentOrSkip,
-  ensureLocatorVisibleOrSkip,
-} from './utils/crudHelpers.js';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 
@@ -17,23 +12,16 @@ test.describe('Метки (Labels)', () => {
   });
 
   test('Создание метки: форма отображается и данные сохраняются', async () => {
-    await ensureListPresentOrSkip(
-      labelsPage,
-      'isLabelsListPresent',
-      'Labels list not present at /labels — skipping',
-    );
+    const listPresent = await labelsPage.isLabelsListPresent();
+    test.skip(!listPresent, 'Labels list not present — skipping labels tests');
 
     await labelsPage.openCreateForm();
-    await ensureFormPresentOrSkip(
-      labelsPage,
-      'isLabelFormPresent',
-      'Label form not present after clicking create — skipping',
-    );
+
+    const formPresent = await labelsPage.isLabelFormPresent();
+    expect(formPresent).toBeTruthy();
 
     const newLabel = {
       name: 'bug',
-      slug: 'bug',
-      color: '#ff0000',
     };
 
     await labelsPage.fillLabelForm(newLabel);
@@ -41,115 +29,89 @@ test.describe('Метки (Labels)', () => {
     await labelsPage.expectLabelInList(newLabel);
   });
 
-  test('Список меток отображается корректно (name, slug)', async () => {
-    await ensureListPresentOrSkip(
-      labelsPage,
-      'isLabelsListPresent',
-      'Labels list not present at /labels — skipping',
-    );
+  test('Список меток отображается корректно (name)', async () => {
+    const listPresent = await labelsPage.isLabelsListPresent();
+    test.skip(!listPresent, 'Labels list not present — skipping labels tests');
 
     const count = await labelsPage.getLabelsCount();
     expect(count).toBeGreaterThanOrEqual(0);
 
     if (count > 0) {
-      const firstRow = labelsPage.rows().first();
+      const firstRow = labelsPage.items().first();
       await expect(firstRow).toBeVisible();
       await expect(firstRow).toContainText(/./);
     }
   });
 
   test('Редактирование метки сохраняет изменения', async () => {
-    await ensureListPresentOrSkip(
-      labelsPage,
-      'isLabelsListPresent',
-      'Labels list not present at /labels — skipping',
-    );
+    const listPresent = await labelsPage.isLabelsListPresent();
+    test.skip(!listPresent, 'Labels list not present — skipping labels tests');
 
     await labelsPage.openCreateForm();
-    await ensureFormPresentOrSkip(
-      labelsPage,
-      'isLabelFormPresent',
-      'Label form not present for create — skipping',
-    );
+
+    let formPresent = await labelsPage.isLabelFormPresent();
+    expect(formPresent).toBeTruthy();
 
     const originalLabel = {
       name: 'feature',
-      slug: 'feature',
-      color: '#00ff00',
     };
 
     await labelsPage.fillLabelForm(originalLabel);
     await labelsPage.submitForm();
     await labelsPage.expectLabelInList(originalLabel);
 
-    await labelsPage.openEditFormForLabel(originalLabel.slug);
-    await ensureFormPresentOrSkip(
-      labelsPage,
-      'isLabelFormPresent',
-      'Label form not present for edit — skipping',
-    );
+    await labelsPage.openEditFormForLabel(originalLabel.name);
+
+    formPresent = await labelsPage.isLabelFormPresent();
+    expect(formPresent).toBeTruthy();
 
     const updatedLabel = {
       name: 'enhancement',
-      slug: 'enhancement',
-      color: '#0000ff',
     };
 
     await labelsPage.fillLabelForm(updatedLabel);
     await labelsPage.submitForm();
 
     await labelsPage.expectLabelInList(updatedLabel);
-    await labelsPage.expectLabelNotInList(originalLabel.slug);
+    await labelsPage.expectLabelNotInList(originalLabel.name);
   });
 
   test('Удаление одной метки', async () => {
-    await ensureListPresentOrSkip(
-      labelsPage,
-      'isLabelsListPresent',
-      'Labels list not present at /labels — skipping',
-    );
+    const listPresent = await labelsPage.isLabelsListPresent();
+    test.skip(!listPresent, 'Labels list not present — skipping labels tests');
 
     const labelToDelete = {
       name: 'temporary',
-      slug: 'temporary',
-      color: '#aaaaaa',
     };
 
     await labelsPage.openCreateForm();
-    await ensureFormPresentOrSkip(
-      labelsPage,
-      'isLabelFormPresent',
-      'Label form not present for create — skipping',
-    );
+
+    const formPresent = await labelsPage.isLabelFormPresent();
+    expect(formPresent).toBeTruthy();
 
     await labelsPage.fillLabelForm(labelToDelete);
     await labelsPage.submitForm();
     await labelsPage.expectLabelInList(labelToDelete);
 
-    await labelsPage.deleteLabel(labelToDelete.slug);
-    await labelsPage.expectLabelNotInList(labelToDelete.slug);
+    await labelsPage.deleteLabel(labelToDelete.name);
+    await labelsPage.expectLabelNotInList(labelToDelete.name);
   });
 
   test('Массовое удаление меток (выделить все -> удалить выбранные)', async () => {
-    await ensureListPresentOrSkip(
-      labelsPage,
-      'isLabelsListPresent',
-      'Labels list not present at /labels — skipping',
-    );
+    const listPresent = await labelsPage.isLabelsListPresent();
+    test.skip(!listPresent, 'Labels list not present — skipping labels tests');
 
     const labels = [
-      { name: 'bulk-label-1', slug: 'bulk-label-1', color: '#111111' },
-      { name: 'bulk-label-2', slug: 'bulk-label-2', color: '#222222' },
-      { name: 'bulk-label-3', slug: 'bulk-label-3', color: '#333333' },
+      { name: 'bulk-label-1' },
+      { name: 'bulk-label-2' },
+      { name: 'bulk-label-3' },
     ];
 
     for (const l of labels) {
       await labelsPage.openCreateForm();
-      await ensureFormPresentOrSkip(
-        labelsPage,
-        'isLabelFormPresent',
-        'Label form not present for create — skipping (bulk)',
-      );
+
+      const formPresent = await labelsPage.isLabelFormPresent();
+      expect(formPresent).toBeTruthy();
 
       await labelsPage.fillLabelForm(l);
       await labelsPage.submitForm();
@@ -158,28 +120,26 @@ test.describe('Метки (Labels)', () => {
 
     const beforeCount = await labelsPage.getLabelsCount();
 
-    await ensureLocatorVisibleOrSkip(
-      labelsPage.selectAllCheckbox(),
-      'Bulk selection UI for labels not implemented — skipping',
-    );
-    await ensureLocatorVisibleOrSkip(
-      labelsPage.deleteSelectedButton(),
-      'Bulk delete UI for labels not implemented — skipping',
-    );
+    try {
+      await expect(labelsPage.selectAllCheckbox()).toBeVisible({ timeout: 1000 });
+      await expect(labelsPage.deleteSelectedButton()).toBeVisible({ timeout: 1000 });
+    } catch {
+      test.skip(true, 'Bulk selection/delete UI for labels not implemented — skipping');
+    }
 
     await labelsPage.selectAllLabels();
 
-    const rows = labelsPage.rows();
+    const rows = labelsPage.items();
     const rowsCount = await rows.count();
     for (let i = 0; i < rowsCount; i += 1) {
-      const checkbox = rows.nth(i).getByTestId('label-select');
+      const checkbox = rows.nth(i).locator('input[type="checkbox"]');
       await expect(checkbox).toBeChecked();
     }
 
     await labelsPage.deleteSelectedLabels();
 
     for (const l of labels) {
-      await labelsPage.expectLabelNotInList(l.slug);
+      await labelsPage.expectLabelNotInList(l.name);
     }
 
     const afterCount = await labelsPage.getLabelsCount();
