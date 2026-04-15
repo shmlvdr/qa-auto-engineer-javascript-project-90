@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import LoginPage from './login.page.js';
+import LoginPage from './pages/login.page.js';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 

@@ -1,5 +1,6 @@
-// tests/login.page.js
 import { expect } from '@playwright/test';
+
+const UI_TIMEOUT = 1000;
 
 export default class LoginPage {
   constructor(page, baseUrl = 'http://localhost:5173') {
@@ -30,9 +31,9 @@ export default class LoginPage {
 
   async isLoginFormPresent() {
     try {
-      await expect(this.loginInput()).toBeVisible({ timeout: 1000 });
-      await expect(this.passwordInput()).toBeVisible({ timeout: 1000 });
-      await expect(this.signInButton()).toBeVisible({ timeout: 1000 });
+      await expect(this.loginInput()).toBeVisible({ timeout: UI_TIMEOUT });
+      await expect(this.passwordInput()).toBeVisible({ timeout: UI_TIMEOUT });
+      await expect(this.signInButton()).toBeVisible({ timeout: UI_TIMEOUT });
       return true;
     } catch {
       return false;
@@ -47,7 +48,7 @@ export default class LoginPage {
 
   async isLoggedIn() {
     try {
-      await expect(this.profileButton()).toBeVisible({ timeout: 2000 });
+      await expect(this.profileButton()).toBeVisible({ timeout: UI_TIMEOUT * 2 });
       return true;
     } catch {
       return false;
@@ -63,7 +64,7 @@ export default class LoginPage {
 
   async isLoggedOut() {
     try {
-      await expect(this.loginInput()).toBeVisible({ timeout: 2000 });
+      await expect(this.loginInput()).toBeVisible({ timeout: UI_TIMEOUT * 2 });
       return true;
     } catch {
       return false;

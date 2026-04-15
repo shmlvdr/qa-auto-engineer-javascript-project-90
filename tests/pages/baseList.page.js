@@ -22,15 +22,9 @@ export default class BaseListPage {
   async isListPresent() {
     try {
       await expect(this.listRoot()).toBeVisible({ timeout: 1000 });
-      await expect(this.items().first()).toBeVisible({ timeout: 2000 });
       return true;
     } catch {
-      try {
-        await expect(this.listRoot()).toBeVisible({ timeout: 1000 });
-        return true;
-      } catch {
-        return false;
-      }
+      return false;
     }
   }
 

@@ -1,5 +1,7 @@
 import { expect } from '@playwright/test';
-import BaseListPage from './pages/baseList.page.js';
+import BaseListPage from './baseList.page.js';
+
+const UI_TIMEOUT = 1000;
 
 export default class UsersPage extends BaseListPage {
   constructor(page, baseUrl = 'http://localhost:5173') {
@@ -38,10 +40,10 @@ export default class UsersPage extends BaseListPage {
 
   async isUserFormPresent() {
     try {
-      await expect(this.emailInput()).toBeVisible({ timeout: 1000 });
-      await expect(this.firstNameInput()).toBeVisible({ timeout: 1000 });
-      await expect(this.lastNameInput()).toBeVisible({ timeout: 1000 });
-      await expect(this.submitButton()).toBeVisible({ timeout: 1000 });
+      await expect(this.emailInput()).toBeVisible({ timeout: UI_TIMEOUT });
+      await expect(this.firstNameInput()).toBeVisible({ timeout: UI_TIMEOUT });
+      await expect(this.lastNameInput()).toBeVisible({ timeout: UI_TIMEOUT });
+      await expect(this.submitButton()).toBeVisible({ timeout: UI_TIMEOUT });
       return true;
     } catch {
       return false;

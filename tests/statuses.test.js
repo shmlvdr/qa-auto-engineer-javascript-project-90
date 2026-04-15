@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import StatusesPage from './statuses.page.js';
+import StatusesPage from './pages/statuses.page.js';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
 

@@ -1,11 +1,14 @@
 import { expect } from '@playwright/test';
-import BaseListPage from './pages/baseList.page.js';
+import BaseListPage from './baseList.page.js';
 
-export default class LabelsPage extends BaseListPage {
+const UI_TIMEOUT = 1000;
+
+export default class StatusesPage extends BaseListPage {
   constructor(page, baseUrl = 'http://localhost:5173') {
-    super(page, baseUrl, '/labels');
+    super(page, baseUrl, '/task_statuses');
 
     this.nameInput = () => this.page.locator('input[name="name"]');
+    this.slugInput = () => this.page.locator('input[name="slug"]');
     this.submitButton = () =>
       this.page.getByRole('button', { name: /save/i });
 
@@ -23,73 +26,77 @@ export default class LabelsPage extends BaseListPage {
     return this.page.locator('tbody.RaDatagrid-tbody tr.RaDatagrid-row');
   }
 
-  async goto(path = '/labels') {
+  async goto(path = '/task_statuses') {
     await super.goto(path);
   }
 
-  async isLabelsListPresent() {
+  async isStatusesListPresent() {
     return this.isListPresent();
   }
 
-  async isLabelFormPresent() {
+  async isStatusFormPresent() {
     try {
-      await expect(this.nameInput()).toBeVisible({ timeout: 1000 });
-      await expect(this.submitButton()).toBeVisible({ timeout: 1000 });
+      await expect(this.nameInput()).toBeVisible({ timeout: UI_TIMEOUT });
+      await expect(this.slugInput()).toBeVisible({ timeout: UI_TIMEOUT });
+      await expect(this.submitButton()).toBeVisible({ timeout: UI_TIMEOUT });
       return true;
     } catch {
       return false;
     }
   }
 
-  async fillLabelForm({ name }) {
+  async fillStatusForm({ name, slug }) {
     if (name !== undefined) await this.nameInput().fill(name);
+    if (slug !== undefined) await this.slugInput().fill(slug);
   }
 
   async submitForm() {
     await this.submitButton().click();
   }
 
-  async getLabelRowByName(name) {
+  async getStatusRowBySlug(slug) {
     return this.items().filter({
-      has: this.page.locator('.column-name'),
-      hasText: name,
+      has: this.page.locator('.column-slug'),
+      hasText: slug,
     });
   }
 
-  async expectLabelInList({ name }) {
-    const row = await this.getLabelRowByName(name);
+  async expectStatusInList({ name, slug }) {
+    const row = await this.getStatusRowBySlug(slug);
     await expect(row).toHaveCount(1);
-    await expect(row.locator('.column-name')).toContainText(name);
+    if (name) {
+      await expect(row.locator('.column-name')).toContainText(name);
+    }
   }
 
-  async expectLabelNotInList(name) {
-    const row = await this.getLabelRowByName(name);
+  async expectStatusNotInList(slug) {
+    const row = await this.getStatusRowBySlug(slug);
     await expect(row).toHaveCount(0);
   }
 
-  async openEditFormForLabel(name) {
-    const row = await this.getLabelRowByName(name);
+  async openEditFormForStatus(slug) {
+    const row = await this.getStatusRowBySlug(slug);
     await expect(row).toHaveCount(1);
     await row.click();
   }
 
-  async deleteLabel(name) {
-    const row = await this.getLabelRowByName(name);
+  async deleteStatus(slug) {
+    const row = await this.getStatusRowBySlug(slug);
     await expect(row).toHaveCount(1);
     const checkbox = row.locator('input[type="checkbox"]');
     await checkbox.check();
     await this.deleteSelectedButton().click();
   }
 
-  async getLabelsCount() {
+  async getStatusesCount() {
     return this.getItemsCount();
   }
 
-  async selectAllLabels() {
+  async selectAllStatuses() {
     await this.selectAllCheckbox().check();
   }
 
-  async deleteSelectedLabels() {
+  async deleteSelectedStatuses() {
     await this.deleteSelectedButton().click();
   }
 }
